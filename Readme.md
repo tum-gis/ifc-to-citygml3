@@ -1,4 +1,4 @@
-# citygml2-to-citygml3
+# ifc-to-citygml3
 An FME workspace for converting IFC data sets to CityGML 3.0 data sets.
 
 
