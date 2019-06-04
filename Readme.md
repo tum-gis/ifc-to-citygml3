@@ -6,6 +6,8 @@ An FME workspace for converting IFC data sets to CityGML 3.0 data sets.
 The FME workspace was created using FME 2019.0 (Build 19238). </br>
 Opening the workspaces with other FME versions might lead to errors. 
 
+The FME workspace makes use of the generic GML Writer to create the CityGML 3.0 data sets.
+
 The CityGML 3.0 XML schemata required by the FME workspace are provided in the 'xsds' folder. </br>
 The XML schemata are equivalent to the latest release on the [OGC CityGML 3.0 Encodings GitHub Release](https://github.com/opengeospatial/CityGML-3.0Encodings/releases) page.
 
