@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CityGML Version No. 3.0, April 2019 -->
+<!-- CityGML - GML 3.1.1 application schema for 3D city models -->
+<!-- International encoding standard of the Open Geospatial Consortium, see http://www.opengeospatial.org/standards/citygml -->
+<!-- Jointly developed by the Special Interest Group 3D (SIG 3D) of GDI-DE, see http://www.sig3d.org               -->
+<!-- For further information see: http://www.citygml.org -->
+<!-- This schema defines the CityGML base profile by employing all CityGML extension modules -->
+<xs:schema xmlns="http://www.opengis.net/citygml/profiles/base/3.0" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	targetNamespace="http://www.opengis.net/citygml/profiles/base/3.0" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:annotation>
+		<xs:documentation>
+		CityGML is an OGC Standard.
+		Copyright (c) 2012 Open Geospatial Consortium.
+		To obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .
+		</xs:documentation>
+	</xs:annotation>
+	<xs:import namespace="http://www.opengis.net/citygml/appearance/3.0" schemaLocation="http://www.3dcitydb.org/citygml3/2019-03-08/xsds/appearance.xsd"/>
+	<xs:import namespace="http://www.opengis.net/citygml/bridge/3.0" schemaLocation="http://www.3dcitydb.org/citygml3/2019-03-08/xsds/bridge.xsd"/>
+	<xs:import namespace="http://www.opengis.net/citygml/building/3.0" schemaLocation="http://www.3dcitydb.org/citygml3/2019-03-08/xsds/building.xsd"/>
+	<xs:import namespace="http://www.opengis.net/citygml/cityfurniture/3.0" schemaLocation="http://www.3dcitydb.org/citygml3/2019-03-08/xsds/cityFurniture.xsd"/>
+	<xs:import namespace="http://www.opengis.net/citygml/cityobjectgroup/3.0" schemaLocation="http://www.3dcitydb.org/citygml3/2019-03-08/xsds/cityObjectGroup.xsd"/>
+	<xs:import namespace="http://www.opengis.net/citygml/construction/3.0" schemaLocation="http://www.3dcitydb.org/citygml3/2019-03-08/xsds/construction.xsd"/>
+	<xs:import namespace="http://www.opengis.net/citygml/pointcloud/3.0" schemaLocation="http://www.3dcitydb.org/citygml3/2019-03-08/xsds/pointCloud.xsd"/>
+	<xs:import namespace="http://www.opengis.net/citygml/3.0" schemaLocation="http://www.3dcitydb.org/citygml3/2019-03-08/xsds/cityGMLBase.xsd"/>
+	<xs:import namespace="http://www.opengis.net/citygml/dynamizer/3.0" schemaLocation="http://www.3dcitydb.org/citygml3/2019-03-08/xsds/dynamizer.xsd"/>
+	<xs:import namespace="http://www.opengis.net/citygml/generics/3.0" schemaLocation="http://www.3dcitydb.org/citygml3/2019-03-08/xsds/generics.xsd"/>
+	<xs:import namespace="http://www.opengis.net/citygml/landuse/3.0" schemaLocation="http://www.3dcitydb.org/citygml3/2019-03-08/xsds/landUse.xsd"/>
+	<xs:import namespace="http://www.opengis.net/citygml/relief/3.0" schemaLocation="http://www.3dcitydb.org/citygml3/2019-03-08/xsds/relief.xsd"/>
+	<xs:import namespace="http://www.opengis.net/citygml/transportation/3.0" schemaLocation="http://www.3dcitydb.org/citygml3/2019-03-08/xsds/transportation.xsd"/>
+	<xs:import namespace="http://www.opengis.net/citygml/tunnel/3.0" schemaLocation="http://www.3dcitydb.org/citygml3/2019-03-08/xsds/tunnel.xsd"/>
+	<xs:import namespace="http://www.opengis.net/citygml/vegetation/3.0" schemaLocation="http://www.3dcitydb.org/citygml3/2019-03-08/xsds/vegetation.xsd"/>
+	<xs:import namespace="http://www.opengis.net/citygml/versioning/3.0" schemaLocation="http://www.3dcitydb.org/citygml3/2019-03-08/xsds/versioning.xsd"/>
+	<xs:import namespace="http://www.opengis.net/citygml/waterbody/3.0" schemaLocation="http://www.3dcitydb.org/citygml3/2019-03-08/xsds/waterBody.xsd"/>
+</xs:schema>
