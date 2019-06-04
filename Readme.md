@@ -51,5 +51,5 @@ FZKHaus - Rooms:
 FZKHaus - BuildingInstallations, Doors, and Windows:
 ![FZKHaus - BuildingInstallations, Doors, and Windows](images/FZKHaus_BuildingInstallations_Doors_Windows.jpg "FZKHaus - BuildingInstallations, Doors, and Windows")
 
-FZKHaus - BuildingConstructivElements:
-![FZKHaus - BuildingConstructivElements](images/FZKHaus_BuildingConstructivElements.jpg "FZKHaus - BuildingConstructivElements")
+FZKHaus - BuildingConstructiveElements:
+![FZKHaus - BuildingConstructiveElements](images/FZKHaus_BuildingConstructiveElements.jpg "FZKHaus - BuildingConstructiveElements")
