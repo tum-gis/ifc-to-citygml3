@@ -37,3 +37,19 @@ The mapping makes use of the class 'BuildingConstructiveElement' that was newly 
 | IfcWindow           | BuildingConstructiveElement |
 | IfcRailing          | BuildingInstallation        |
 | IfcStair            | BuildingInstallation        |
+
+
+## Results
+Below are some screenshots of the transformed 'FZKHaus' data set visualised using the FME Data Inspector 2019.0.
+
+FZKHaus represented in CityGML 3.0:
+![FZKHaus represented in CityGML 3.0](images/FZKHaus.jpg "FZKHaus represented in CityGML 3.0")
+
+FZKHaus - Rooms:
+![FZKHaus - Rooms](images/FZKHaus_Rooms.jpg "FZKHaus - Rooms")
+
+FZKHaus - BuildingInstallations, Doors, and Windows:
+![FZKHaus - BuildingInstallations, Doors, and Windows](images/FZKHaus_BuildingInstallations_Doors_Windows.jpg "FZKHaus - BuildingInstallations, Doors, and Windows")
+
+FZKHaus - BuildingConstructivElements:
+![FZKHaus - BuildingConstructivElements](images/FZKHaus_BuildingConstructivElements.jpg "FZKHaus - BuildingConstructivElements")
