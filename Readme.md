@@ -11,7 +11,7 @@ The FME workspace makes use of the generic GML Writer to create the CityGML 3.0 
 The CityGML 3.0 XML schemata required by the FME workspace are provided in the 'xsds' folder. </br>
 The XML schemata are equivalent to the latest release on the [OGC CityGML 3.0 Encodings GitHub Release](https://github.com/opengeospatial/CityGML-3.0Encodings/releases) page.
 
-Please note that the XML schemata are still under development and subject to change. </br>
+Please note that CityGML 3.0 is not finalized yet (but is quite stable now). Therefore, the XML schemata may be still subject to change.</br>
 
 
 ## Test data sets
