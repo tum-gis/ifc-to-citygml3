@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?><schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:con="http://www.opengis.net/citygml/construction/3.0" xmlns:core="http://www.opengis.net/citygml/3.0" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlexr="http://www.opengis.net/gml/3.3/exr" elementFormDefault="qualified" targetNamespace="http://www.opengis.net/citygml/construction/3.0" version="3.0.0">
+<?xml version="1.0" encoding="UTF-8"?><schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:con="http://www.opengis.net/citygml/construction/3.0" xmlns:core="http://www.opengis.net/citygml/3.0" xmlns:gml="http://www.opengis.net/gml/3.2" elementFormDefault="qualified" targetNamespace="http://www.opengis.net/citygml/construction/3.0" version="3.0.0">
   <import namespace="http://www.opengis.net/citygml/3.0" schemaLocation="./cityGMLBase.xsd"/>
   <import namespace="http://www.opengis.net/gml/3.2" schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd"/>
-  <import namespace="http://www.opengis.net/gml/3.3/exr" schemaLocation="http://schemas.opengis.net/gml/3.3/extdEncRule.xsd"/>
   <!--XML Schema document created by ShapeChange - http://shapechange.net/-->
   <element abstract="true" name="AbstractGenericApplicationPropertyOfAbstractConstruction" type="anyType"/>
   <element abstract="true" name="AbstractConstruction" substitutionGroup="core:AbstractOccupiedSpace" type="con:AbstractConstructionType">
@@ -15,18 +14,6 @@ AbstractConstruction. E.g. a road or canal is man made, but not an AbstractConst
     <complexContent>
       <extension base="core:AbstractOccupiedSpaceType">
         <sequence>
-          <element maxOccurs="unbounded" minOccurs="0" name="occupancy">
-            <complexType>
-              <complexContent>
-                <extension base="gml:AbstractMemberType">
-                  <sequence minOccurs="0">
-                    <element ref="core:Occupancy"/>
-                  </sequence>
-                  <attributeGroup ref="gml:AssociationAttributeGroup"/>
-                </extension>
-              </complexContent>
-            </complexType>
-          </element>
           <element minOccurs="0" name="conditionOfConstruction" type="con:ConditionOfConstructionValueType">
             <annotation>
               <documentation>[INSPIRE] Status of the construction.</documentation>
@@ -57,7 +44,7 @@ AbstractConstruction. E.g. a road or canal is man made, but not an AbstractConst
               <documentation>[INSPIRE] Height above ground.</documentation>
             </annotation>
           </element>
-          <element maxOccurs="unbounded" minOccurs="0" name="constructionSurface" type="con:AbstractConstructionSurfacePropertyType"/>
+          <element maxOccurs="unbounded" minOccurs="0" name="occupancy" type="core:OccupancyPropertyType"/>
           <element maxOccurs="unbounded" minOccurs="0" ref="con:AbstractGenericApplicationPropertyOfAbstractConstruction"/>
         </sequence>
       </extension>
@@ -77,7 +64,6 @@ AbstractConstruction. E.g. a road or canal is man made, but not an AbstractConst
       <extension base="core:AbstractThematicSurfaceType">
         <sequence>
           <element maxOccurs="unbounded" minOccurs="0" name="fillingSurface" type="con:AbstractFillingSurfacePropertyType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="closureSurface" type="core:ClosureSurfacePropertyType"/>
           <element maxOccurs="unbounded" minOccurs="0" ref="con:AbstractGenericApplicationPropertyOfAbstractConstructionSurface"/>
         </sequence>
       </extension>
@@ -245,13 +231,7 @@ AbstractConstruction. E.g. a road or canal is man made, but not an AbstractConst
   <element name="ConstructionEvent" substitutionGroup="gml:AbstractObject" type="con:ConstructionEventType"/>
   <complexType name="ConstructionEventType">
     <sequence>
-      <element name="event" type="gml:ReferenceType">
-        <annotation>
-          <appinfo>
-            <targetCodeList xmlns="http://www.opengis.net/gml/3.3/exr">EventValue</targetCodeList>
-          </appinfo>
-        </annotation>
-      </element>
+      <element name="event" type="gml:CodeType"/>
       <element name="dateOfEvent" type="date"/>
       <element minOccurs="0" name="description" type="string"/>
     </sequence>
@@ -271,7 +251,9 @@ AbstractConstruction. E.g. a road or canal is man made, but not an AbstractConst
     <complexContent>
       <extension base="con:AbstractFillingElementType">
         <sequence>
-          <element maxOccurs="unbounded" minOccurs="0" name="doorSurface" type="con:DoorSurfacePropertyType"/>
+          <element minOccurs="0" name="class" type="gml:CodeType"/>
+          <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType"/>
+          <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType"/>
           <element maxOccurs="unbounded" minOccurs="0" name="address" type="core:AddressPropertyType">
             <annotation>
               <documentation>SIG3D: Relation between Door and Address.</documentation>
@@ -315,7 +297,7 @@ AbstractConstruction. E.g. a road or canal is man made, but not an AbstractConst
   </element>
   <complexType name="ElevationType">
     <sequence>
-      <element name="elevationReference" type="con:ElevationReferenceValueType">
+      <element name="elevationReference" type="gml:CodeType">
         <annotation>
           <documentation>[INSPIRE] Element where the elevation was measured.</documentation>
         </annotation>
@@ -332,93 +314,6 @@ AbstractConstruction. E.g. a road or canal is man made, but not an AbstractConst
       <element ref="con:Elevation"/>
     </sequence>
   </complexType>
-  <simpleType name="ElevationReferenceValueType">
-    <annotation>
-      <documentation>[INSPIRE] List of possible elements considered to capture a vertical geometry.</documentation>
-    </annotation>
-    <restriction base="string">
-      <enumeration value="aboveGroundEnvelope">
-        <annotation>
-          <documentation>[INSPIRE] The elevation has been captured at the level of the maximum extent of the above ground envelope of the construction.</documentation>
-        </annotation>
-      </enumeration>
-      <enumeration value="bottomOfConstruction">
-        <annotation>
-          <documentation>[INSPIRE] The elevation has been captured at the bottom of the usable part of the construction.</documentation>
-        </annotation>
-      </enumeration>
-      <enumeration value="entrancePoint">
-        <annotation>
-          <documentation>[INSPIRE] The elevation has been captured at the entrance of the construction, generally the bottom of entrance door.</documentation>
-        </annotation>
-      </enumeration>
-      <enumeration value="generalEave">
-        <annotation>
-          <documentation>[INSPIRE] The elevation has been captured at eave level, anywhere between the lowest and the highest eave levels of the construction.</documentation>
-        </annotation>
-      </enumeration>
-      <enumeration value="generalGround">
-        <annotation>
-          <documentation>[INSPIRE] The elevation has been captured at ground level, anywhere between the lowest and the highest ground points of the construction.</documentation>
-        </annotation>
-      </enumeration>
-      <enumeration value="generalRoof">
-        <annotation>
-          <documentation>[INSPIRE] The elevation has been captured at roof level, anywhere between the lowest edge roof level and the top of the construction.</documentation>
-        </annotation>
-      </enumeration>
-      <enumeration value="generalRoofEdge">
-        <annotation>
-          <documentation>[INSPIRE] The elevation has been captured at roof edge level, anywhere between the lowest and the highest roof edges of the construction.</documentation>
-        </annotation>
-      </enumeration>
-      <enumeration value="highestEave">
-        <annotation>
-          <documentation>[INSPIRE] The elevation has been captured at the highest eave level of the construction.</documentation>
-        </annotation>
-      </enumeration>
-      <enumeration value="highestGroundPoint">
-        <annotation>
-          <documentation>[INSPIRE] The elevation has been captured at the highest ground point of the construction.</documentation>
-        </annotation>
-      </enumeration>
-      <enumeration value="highestPoint">
-        <annotation>
-          <documentation>[INSPIRE] The elevation has been captured at the highest point of the construction, including the installations, such as chimneys and antennas.</documentation>
-        </annotation>
-      </enumeration>
-      <enumeration value="highestRoofEdge">
-        <annotation>
-          <documentation>[INSPIRE] The elevation has been captured at the highest roof edge level of the construction.</documentation>
-        </annotation>
-      </enumeration>
-      <enumeration value="lowestEave">
-        <annotation>
-          <documentation>[INSPIRE] The elevation has been captured at the lowest eave level of the construction.</documentation>
-        </annotation>
-      </enumeration>
-      <enumeration value="lowestFloorAboveGround">
-        <annotation>
-          <documentation>[INSPIRE] The elevation has been captured at the level of the lowest floor above ground.</documentation>
-        </annotation>
-      </enumeration>
-      <enumeration value="lowestGroundPoint">
-        <annotation>
-          <documentation>[INSPIRE] The elevation has been captured at the lowest ground point level of the construction.</documentation>
-        </annotation>
-      </enumeration>
-      <enumeration value="lowestRoofEdge">
-        <annotation>
-          <documentation>[INSPIRE] The elevation has been captured at the lowest roof edge level of the construction.</documentation>
-        </annotation>
-      </enumeration>
-      <enumeration value="topOfConstruction">
-        <annotation>
-          <documentation>[INSPIRE] The elevation has been captured at the top level of the construction.</documentation>
-        </annotation>
-      </enumeration>
-    </restriction>
-  </simpleType>
   <element abstract="true" name="AbstractGenericApplicationPropertyOfFloorSurface" type="anyType"/>
   <element name="FloorSurface" substitutionGroup="con:AbstractConstructionSurface" type="con:FloorSurfaceType">
     <annotation>
@@ -470,12 +365,12 @@ AbstractConstruction. E.g. a road or canal is man made, but not an AbstractConst
   </element>
   <complexType name="HeightType">
     <sequence>
-      <element name="highReference" type="con:ElevationReferenceValueType">
+      <element name="highReference" type="gml:CodeType">
         <annotation>
           <documentation>[INSPIRE] Element used as the high reference.</documentation>
         </annotation>
       </element>
-      <element name="lowReference" type="con:ElevationReferenceValueType">
+      <element name="lowReference" type="gml:CodeType">
         <annotation>
           <documentation>[INSPIRE] Element as the low reference.</documentation>
         </annotation>
@@ -546,7 +441,7 @@ AbstractConstruction. E.g. a road or canal is man made, but not an AbstractConst
     <complexContent>
       <extension base="con:AbstractConstructionType">
         <sequence>
-          <element name="class" type="gml:CodeType"/>
+          <element minOccurs="0" name="class" type="gml:CodeType"/>
           <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType"/>
           <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType"/>
           <element maxOccurs="unbounded" minOccurs="0" ref="con:AbstractGenericApplicationPropertyOfOtherConstruction"/>
@@ -666,7 +561,9 @@ AbstractConstruction. E.g. a road or canal is man made, but not an AbstractConst
     <complexContent>
       <extension base="con:AbstractFillingElementType">
         <sequence>
-          <element maxOccurs="unbounded" minOccurs="0" name="windowSurface" type="con:WindowSurfacePropertyType"/>
+          <element minOccurs="0" name="class" type="gml:CodeType"/>
+          <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType"/>
+          <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType"/>
           <element maxOccurs="unbounded" minOccurs="0" ref="con:AbstractGenericApplicationPropertyOfWindow"/>
         </sequence>
       </extension>

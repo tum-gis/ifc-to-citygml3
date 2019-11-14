@@ -49,18 +49,6 @@
               <documentation>SIG3D: Actual usage of WaterBody as given by the relevant national regulations, information communities, or specific applications.</documentation>
             </annotation>
           </element>
-          <element maxOccurs="unbounded" minOccurs="0" name="WaterBoundarySurface">
-            <complexType>
-              <complexContent>
-                <extension base="gml:AbstractFeatureMemberType">
-                  <sequence minOccurs="0">
-                    <element ref="wtr:AbstractWaterBoundarySurface"/>
-                  </sequence>
-                  <attributeGroup ref="gml:AssociationAttributeGroup"/>
-                </extension>
-              </complexContent>
-            </complexType>
-          </element>
           <element maxOccurs="unbounded" minOccurs="0" ref="wtr:AbstractGenericApplicationPropertyOfWaterBody"/>
         </sequence>
       </extension>
@@ -69,28 +57,6 @@
   <complexType name="WaterBodyPropertyType">
     <sequence minOccurs="0">
       <element ref="wtr:WaterBody"/>
-    </sequence>
-    <attributeGroup ref="gml:AssociationAttributeGroup"/>
-    <attributeGroup ref="gml:OwnershipAttributeGroup"/>
-  </complexType>
-  <element abstract="true" name="AbstractGenericApplicationPropertyOfWaterClosureSurface" type="anyType"/>
-  <element name="WaterClosureSurface" substitutionGroup="wtr:AbstractWaterBoundarySurface" type="wtr:WaterClosureSurfaceType">
-    <annotation>
-      <documentation>SIG3D: Exterior or interior boundary surface, which provides imaginary boundaries, used to describe parts of the outer shell of WaterBody.</documentation>
-    </annotation>
-  </element>
-  <complexType name="WaterClosureSurfaceType">
-    <complexContent>
-      <extension base="wtr:AbstractWaterBoundarySurfaceType">
-        <sequence>
-          <element maxOccurs="unbounded" minOccurs="0" ref="wtr:AbstractGenericApplicationPropertyOfWaterClosureSurface"/>
-        </sequence>
-      </extension>
-    </complexContent>
-  </complexType>
-  <complexType name="WaterClosureSurfacePropertyType">
-    <sequence minOccurs="0">
-      <element ref="wtr:WaterClosureSurface"/>
     </sequence>
     <attributeGroup ref="gml:AssociationAttributeGroup"/>
     <attributeGroup ref="gml:OwnershipAttributeGroup"/>
