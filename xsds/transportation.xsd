@@ -1,22 +1,240 @@
 <?xml version="1.0" encoding="UTF-8"?><schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:core="http://www.opengis.net/citygml/3.0" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:tran="http://www.opengis.net/citygml/transportation/3.0" elementFormDefault="qualified" targetNamespace="http://www.opengis.net/citygml/transportation/3.0" version="3.0.0">
+  <annotation>
+    <documentation>The Transportation module supports representation of the transportation infrastructure. Transportation features include roads, tracks, waterways, railways, and squares. Transportation features may be represented as a network and/or as a collection of spaces or surface elements embedded in a three-dimensional space.</documentation>
+  </annotation>
   <import namespace="http://www.opengis.net/citygml/3.0" schemaLocation="./cityGMLBase.xsd"/>
   <import namespace="http://www.opengis.net/gml/3.2" schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd"/>
   <!--XML Schema document created by ShapeChange - http://shapechange.net/-->
-  <element abstract="true" name="AbstractGenericApplicationPropertyOfAbstractTransportationSpace" type="anyType"/>
+  <element abstract="true" name="ADEOfAbstractTransportationSpace" substitutionGroup="gml:AbstractObject" type="tran:ADEOfAbstractTransportationSpaceType">
+    <annotation>
+      <documentation>ADEOfAbstractTransportationSpace acts as a hook to define properties within an ADE that are to be added to AbstractTransportationSpace.</documentation>
+    </annotation>
+  </element>
+  <complexType abstract="true" name="ADEOfAbstractTransportationSpaceType">
+    <sequence/>
+  </complexType>
+  <complexType name="ADEOfAbstractTransportationSpacePropertyType">
+    <sequence>
+      <element ref="tran:ADEOfAbstractTransportationSpace"/>
+    </sequence>
+  </complexType>
+  <element abstract="true" name="ADEOfAuxiliaryTrafficArea" substitutionGroup="gml:AbstractObject" type="tran:ADEOfAuxiliaryTrafficAreaType">
+    <annotation>
+      <documentation>ADEOfAuxiliaryTrafficAra acts as a hook to define properties within an ADE that are to be added to an AuxiliaryTrafficArea.</documentation>
+    </annotation>
+  </element>
+  <complexType abstract="true" name="ADEOfAuxiliaryTrafficAreaType">
+    <sequence/>
+  </complexType>
+  <complexType name="ADEOfAuxiliaryTrafficAreaPropertyType">
+    <sequence>
+      <element ref="tran:ADEOfAuxiliaryTrafficArea"/>
+    </sequence>
+  </complexType>
+  <element abstract="true" name="ADEOfAuxiliaryTrafficSpace" substitutionGroup="gml:AbstractObject" type="tran:ADEOfAuxiliaryTrafficSpaceType">
+    <annotation>
+      <documentation>ADEOfAuxiliaryTrafficSpace acts as a hook to define properties within an ADE that are to be added to an AuxiliaryTrafficSpace.</documentation>
+    </annotation>
+  </element>
+  <complexType abstract="true" name="ADEOfAuxiliaryTrafficSpaceType">
+    <sequence/>
+  </complexType>
+  <complexType name="ADEOfAuxiliaryTrafficSpacePropertyType">
+    <sequence>
+      <element ref="tran:ADEOfAuxiliaryTrafficSpace"/>
+    </sequence>
+  </complexType>
+  <element abstract="true" name="ADEOfClearanceSpace" substitutionGroup="gml:AbstractObject" type="tran:ADEOfClearanceSpaceType">
+    <annotation>
+      <documentation>ADEOfClearanceSpace acts as a hook to define properties within an ADE that are to be added to a ClearanceSpace.</documentation>
+    </annotation>
+  </element>
+  <complexType abstract="true" name="ADEOfClearanceSpaceType">
+    <sequence/>
+  </complexType>
+  <complexType name="ADEOfClearanceSpacePropertyType">
+    <sequence>
+      <element ref="tran:ADEOfClearanceSpace"/>
+    </sequence>
+  </complexType>
+  <element abstract="true" name="ADEOfHole" substitutionGroup="gml:AbstractObject" type="tran:ADEOfHoleType">
+    <annotation>
+      <documentation>ADEOfHole acts as a hook to define properties within an ADE that are to be added to a Hole.</documentation>
+    </annotation>
+  </element>
+  <complexType abstract="true" name="ADEOfHoleType">
+    <sequence/>
+  </complexType>
+  <complexType name="ADEOfHolePropertyType">
+    <sequence>
+      <element ref="tran:ADEOfHole"/>
+    </sequence>
+  </complexType>
+  <element abstract="true" name="ADEOfHoleSurface" substitutionGroup="gml:AbstractObject" type="tran:ADEOfHoleSurfaceType">
+    <annotation>
+      <documentation>ADEOfHoleSurface acts as a hook to define properties within an ADE that are to be added to a HoleSurface.</documentation>
+    </annotation>
+  </element>
+  <complexType abstract="true" name="ADEOfHoleSurfaceType">
+    <sequence/>
+  </complexType>
+  <complexType name="ADEOfHoleSurfacePropertyType">
+    <sequence>
+      <element ref="tran:ADEOfHoleSurface"/>
+    </sequence>
+  </complexType>
+  <element abstract="true" name="ADEOfIntersection" substitutionGroup="gml:AbstractObject" type="tran:ADEOfIntersectionType">
+    <annotation>
+      <documentation>ADEOfIntersection acts as a hook to define properties within an ADE that are to be added to an Intersection.</documentation>
+    </annotation>
+  </element>
+  <complexType abstract="true" name="ADEOfIntersectionType">
+    <sequence/>
+  </complexType>
+  <complexType name="ADEOfIntersectionPropertyType">
+    <sequence>
+      <element ref="tran:ADEOfIntersection"/>
+    </sequence>
+  </complexType>
+  <element abstract="true" name="ADEOfMarking" substitutionGroup="gml:AbstractObject" type="tran:ADEOfMarkingType">
+    <annotation>
+      <documentation>ADEOfMarking acts as a hook to define properties within an ADE that are to be added to a Marking.</documentation>
+    </annotation>
+  </element>
+  <complexType abstract="true" name="ADEOfMarkingType">
+    <sequence/>
+  </complexType>
+  <complexType name="ADEOfMarkingPropertyType">
+    <sequence>
+      <element ref="tran:ADEOfMarking"/>
+    </sequence>
+  </complexType>
+  <element abstract="true" name="ADEOfRailway" substitutionGroup="gml:AbstractObject" type="tran:ADEOfRailwayType">
+    <annotation>
+      <documentation>ADEOfRailway acts as a hook to define properties within an ADE that are to be added to a Railway.</documentation>
+    </annotation>
+  </element>
+  <complexType abstract="true" name="ADEOfRailwayType">
+    <sequence/>
+  </complexType>
+  <complexType name="ADEOfRailwayPropertyType">
+    <sequence>
+      <element ref="tran:ADEOfRailway"/>
+    </sequence>
+  </complexType>
+  <element abstract="true" name="ADEOfRoad" substitutionGroup="gml:AbstractObject" type="tran:ADEOfRoadType">
+    <annotation>
+      <documentation>ADEOfRoad acts as a hook to define properties within an ADE that are to be added to a Road.</documentation>
+    </annotation>
+  </element>
+  <complexType abstract="true" name="ADEOfRoadType">
+    <sequence/>
+  </complexType>
+  <complexType name="ADEOfRoadPropertyType">
+    <sequence>
+      <element ref="tran:ADEOfRoad"/>
+    </sequence>
+  </complexType>
+  <element abstract="true" name="ADEOfSection" substitutionGroup="gml:AbstractObject" type="tran:ADEOfSectionType">
+    <annotation>
+      <documentation>ADEOfSection acts as a hook to define properties within an ADE that are to be added to a Section.</documentation>
+    </annotation>
+  </element>
+  <complexType abstract="true" name="ADEOfSectionType">
+    <sequence/>
+  </complexType>
+  <complexType name="ADEOfSectionPropertyType">
+    <sequence>
+      <element ref="tran:ADEOfSection"/>
+    </sequence>
+  </complexType>
+  <element abstract="true" name="ADEOfSquare" substitutionGroup="gml:AbstractObject" type="tran:ADEOfSquareType">
+    <annotation>
+      <documentation>ADEOfSquare acts as a hook to define properties within an ADE that are to be added to a Square.</documentation>
+    </annotation>
+  </element>
+  <complexType abstract="true" name="ADEOfSquareType">
+    <sequence/>
+  </complexType>
+  <complexType name="ADEOfSquarePropertyType">
+    <sequence>
+      <element ref="tran:ADEOfSquare"/>
+    </sequence>
+  </complexType>
+  <element abstract="true" name="ADEOfTrack" substitutionGroup="gml:AbstractObject" type="tran:ADEOfTrackType">
+    <annotation>
+      <documentation>ADEOfTrack acts as a hook to define properties within an ADE that are to be added to a Track.</documentation>
+    </annotation>
+  </element>
+  <complexType abstract="true" name="ADEOfTrackType">
+    <sequence/>
+  </complexType>
+  <complexType name="ADEOfTrackPropertyType">
+    <sequence>
+      <element ref="tran:ADEOfTrack"/>
+    </sequence>
+  </complexType>
+  <element abstract="true" name="ADEOfTrafficArea" substitutionGroup="gml:AbstractObject" type="tran:ADEOfTrafficAreaType">
+    <annotation>
+      <documentation>ADEOfTrafficArea acts as a hook to define properties within an ADE that are to be added to a TrafficArea.</documentation>
+    </annotation>
+  </element>
+  <complexType abstract="true" name="ADEOfTrafficAreaType">
+    <sequence/>
+  </complexType>
+  <complexType name="ADEOfTrafficAreaPropertyType">
+    <sequence>
+      <element ref="tran:ADEOfTrafficArea"/>
+    </sequence>
+  </complexType>
+  <element abstract="true" name="ADEOfTrafficSpace" substitutionGroup="gml:AbstractObject" type="tran:ADEOfTrafficSpaceType">
+    <annotation>
+      <documentation>ADEOfTrafficSpace acts as a hook to define properties within an ADE that are to be added to a TrafficSpace.</documentation>
+    </annotation>
+  </element>
+  <complexType abstract="true" name="ADEOfTrafficSpaceType">
+    <sequence/>
+  </complexType>
+  <complexType name="ADEOfTrafficSpacePropertyType">
+    <sequence>
+      <element ref="tran:ADEOfTrafficSpace"/>
+    </sequence>
+  </complexType>
+  <element abstract="true" name="ADEOfWaterway" substitutionGroup="gml:AbstractObject" type="tran:ADEOfWaterwayType">
+    <annotation>
+      <documentation>ADEOfWaterway acts as a hook to define properties within an ADE that are to be added to a Waterway.</documentation>
+    </annotation>
+  </element>
+  <complexType abstract="true" name="ADEOfWaterwayType">
+    <sequence/>
+  </complexType>
+  <complexType name="ADEOfWaterwayPropertyType">
+    <sequence>
+      <element ref="tran:ADEOfWaterway"/>
+    </sequence>
+  </complexType>
   <element abstract="true" name="AbstractTransportationSpace" substitutionGroup="core:AbstractUnoccupiedSpace" type="tran:AbstractTransportationSpaceType">
     <annotation>
-      <documentation>SIG3D: Aggregation of TrafficSpaces and AuxiliaryTrafficSpaces, e.g the different lanes of a multi-lane road.</documentation>
+      <documentation>AbstractTransportationSpace is the abstract superclass of transportation objects such as Roads, Tracks, Railways, Waterways or Squares.</documentation>
     </annotation>
   </element>
   <complexType abstract="true" name="AbstractTransportationSpaceType">
     <complexContent>
       <extension base="core:AbstractUnoccupiedSpaceType">
         <sequence>
-          <element minOccurs="0" name="trafficDirection" type="tran:TrafficDirectionValueType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="occupancy" type="core:OccupancyPropertyType"/>
+          <element minOccurs="0" name="trafficDirection" type="tran:TrafficDirectionValueType">
+            <annotation>
+              <documentation>Indicates the direction of traffic flow relative to the corresponding linear geometry representation.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="occupancy" type="core:OccupancyPropertyType">
+            <annotation>
+              <documentation>Provides information on the residency of persons, vehicles, or other moving features in the transportation space.</documentation>
+            </annotation>
+          </element>
           <element maxOccurs="unbounded" minOccurs="0" name="trafficSpace">
             <annotation>
-              <documentation>SIG3D: Relation between TransportationComplex and TrafficSpace</documentation>
+              <documentation>Relates to the traffic spaces that are part of the transportation space.</documentation>
             </annotation>
             <complexType>
               <complexContent>
@@ -31,7 +249,7 @@
           </element>
           <element maxOccurs="unbounded" minOccurs="0" name="auxiliaryTrafficSpace">
             <annotation>
-              <documentation>SIG3D: Relation between TransportationComplex and AuxiliaryTrafficSpace.</documentation>
+              <documentation>Relates to the auxiliary traffic spaces that are part of the transportation space.</documentation>
             </annotation>
             <complexType>
               <complexContent>
@@ -45,6 +263,9 @@
             </complexType>
           </element>
           <element maxOccurs="unbounded" minOccurs="0" name="hole">
+            <annotation>
+              <documentation>Relates to the holes that are part of the transportation space.</documentation>
+            </annotation>
             <complexType>
               <complexContent>
                 <extension base="gml:AbstractFeatureMemberType">
@@ -57,6 +278,9 @@
             </complexType>
           </element>
           <element maxOccurs="unbounded" minOccurs="0" name="marking">
+            <annotation>
+              <documentation>Relates to the markings that are part of the transportation space.</documentation>
+            </annotation>
             <complexType>
               <complexContent>
                 <extension base="gml:AbstractFeatureMemberType">
@@ -68,7 +292,11 @@
               </complexContent>
             </complexType>
           </element>
-          <element maxOccurs="unbounded" minOccurs="0" ref="tran:AbstractGenericApplicationPropertyOfAbstractTransportationSpace"/>
+          <element maxOccurs="unbounded" minOccurs="0" name="adeOfAbstractTransportationSpace" type="tran:ADEOfAbstractTransportationSpacePropertyType">
+            <annotation>
+              <documentation>Augments AbstractTransportationSpace with properties defined in an ADE.</documentation>
+            </annotation>
+          </element>
         </sequence>
       </extension>
     </complexContent>
@@ -80,17 +308,40 @@
     <attributeGroup ref="gml:AssociationAttributeGroup"/>
     <attributeGroup ref="gml:OwnershipAttributeGroup"/>
   </complexType>
-  <element abstract="true" name="AbstractGenericApplicationPropertyOfAuxiliaryTrafficArea" type="anyType"/>
-  <element name="AuxiliaryTrafficArea" substitutionGroup="core:AbstractThematicSurface" type="tran:AuxiliaryTrafficAreaType"/>
+  <element name="AuxiliaryTrafficArea" substitutionGroup="core:AbstractThematicSurface" type="tran:AuxiliaryTrafficAreaType">
+    <annotation>
+      <documentation>An AuxiliaryTrafficArea is the ground surface of an AuxiliaryTrafficSpace.</documentation>
+    </annotation>
+  </element>
   <complexType name="AuxiliaryTrafficAreaType">
     <complexContent>
       <extension base="core:AbstractThematicSurfaceType">
         <sequence>
-          <element minOccurs="0" name="class" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType"/>
-          <element minOccurs="0" name="surfaceMaterial" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" ref="tran:AbstractGenericApplicationPropertyOfAuxiliaryTrafficArea"/>
+          <element minOccurs="0" name="class" type="gml:CodeType">
+            <annotation>
+              <documentation>Indicates the specific type of the AuxiliaryTrafficArea.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType">
+            <annotation>
+              <documentation>Specifies the intended purposes of the AuxiliaryTrafficArea.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType">
+            <annotation>
+              <documentation>Specifies the actual uses of the AuxiliaryTrafficArea.</documentation>
+            </annotation>
+          </element>
+          <element minOccurs="0" name="surfaceMaterial" type="gml:CodeType">
+            <annotation>
+              <documentation>Specifies the type of pavement of the AuxiliaryTrafficArea.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="adeOfAuxiliaryTrafficArea" type="tran:ADEOfAuxiliaryTrafficAreaPropertyType">
+            <annotation>
+              <documentation>Augments the AuxiliaryTrafficArea with properties defined in an ADE.</documentation>
+            </annotation>
+          </element>
         </sequence>
       </extension>
     </complexContent>
@@ -102,10 +353,9 @@
     <attributeGroup ref="gml:AssociationAttributeGroup"/>
     <attributeGroup ref="gml:OwnershipAttributeGroup"/>
   </complexType>
-  <element abstract="true" name="AbstractGenericApplicationPropertyOfAuxiliaryTrafficSpace" type="anyType"/>
   <element name="AuxiliaryTrafficSpace" substitutionGroup="core:AbstractUnoccupiedSpace" type="tran:AuxiliaryTrafficSpaceType">
     <annotation>
-      <documentation>SIG3D: Space within the transport area not intended for traffic purposes</documentation>
+      <documentation>An AuxiliaryTrafficSpace is a space within the transportation space not intended for traffic purposes.</documentation>
     </annotation>
   </element>
   <complexType name="AuxiliaryTrafficSpaceType">
@@ -114,21 +364,29 @@
         <sequence>
           <element minOccurs="0" name="class" type="gml:CodeType">
             <annotation>
-              <documentation>SIG3D: Classification of AuxiliaryTrafficSpace as given by the relevant national regulations, information communities, or specific applications.</documentation>
+              <documentation>Indicates the specific type of the AuxiliaryTrafficSpace.</documentation>
             </annotation>
           </element>
           <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType">
             <annotation>
-              <documentation>SIG3D: Specified function of AuxiliaryTrafficSpace given by the relevant national regulations, information communities, or specific applications.</documentation>
+              <documentation>Specifies the intended purposes of the AuxiliaryTrafficSpace.</documentation>
             </annotation>
           </element>
           <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType">
             <annotation>
-              <documentation>SIG3D: Actual usage of AuxiliaryTrafficSpace as given by the relevant national regulations, information communities, or specific applications.</documentation>
+              <documentation>Specifies the actual uses of the AuxiliaryTrafficSpace.</documentation>
             </annotation>
           </element>
-          <element name="granularity" type="tran:GranularityValueType"/>
-          <element maxOccurs="unbounded" minOccurs="0" ref="tran:AbstractGenericApplicationPropertyOfAuxiliaryTrafficSpace"/>
+          <element name="granularity" type="tran:GranularityValueType">
+            <annotation>
+              <documentation>Defines whether auxiliary traffic spaces are represented by individual ways or by individual lanes, depending on the desired level of detail.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="adeOfAuxiliaryTrafficSpace" type="tran:ADEOfAuxiliaryTrafficSpacePropertyType">
+            <annotation>
+              <documentation>Augments the AuxiliaryTrafficSpace with properties defined in an ADE.</documentation>
+            </annotation>
+          </element>
         </sequence>
       </extension>
     </complexContent>
@@ -140,14 +398,25 @@
     <attributeGroup ref="gml:AssociationAttributeGroup"/>
     <attributeGroup ref="gml:OwnershipAttributeGroup"/>
   </complexType>
-  <element abstract="true" name="AbstractGenericApplicationPropertyOfClearanceSpace" type="anyType"/>
-  <element name="ClearanceSpace" substitutionGroup="core:AbstractUnoccupiedSpace" type="tran:ClearanceSpaceType"/>
+  <element name="ClearanceSpace" substitutionGroup="core:AbstractUnoccupiedSpace" type="tran:ClearanceSpaceType">
+    <annotation>
+      <documentation>A ClearanceSpace represents the actual free space above a TrafficArea within which a mobile object can move without contacting an obstruction.</documentation>
+    </annotation>
+  </element>
   <complexType name="ClearanceSpaceType">
     <complexContent>
       <extension base="core:AbstractUnoccupiedSpaceType">
         <sequence>
-          <element maxOccurs="unbounded" minOccurs="0" name="class" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" ref="tran:AbstractGenericApplicationPropertyOfClearanceSpace"/>
+          <element maxOccurs="unbounded" minOccurs="0" name="class" type="gml:CodeType">
+            <annotation>
+              <documentation>Indicates the specific type of the ClearanceSpace.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="adeOfClearanceSpace" type="tran:ADEOfClearanceSpacePropertyType">
+            <annotation>
+              <documentation>Augments the ClearanceSpace with properties defined in an ADE.</documentation>
+            </annotation>
+          </element>
         </sequence>
       </extension>
     </complexContent>
@@ -160,19 +429,41 @@
     <attributeGroup ref="gml:OwnershipAttributeGroup"/>
   </complexType>
   <simpleType name="GranularityValueType">
+    <annotation>
+      <documentation>GranularityValue enumerates the different levels of granularity in which transportation objects are represented.</documentation>
+    </annotation>
     <restriction base="string">
-      <enumeration value="lane"/>
-      <enumeration value="way"/>
+      <enumeration value="lane">
+        <annotation>
+          <documentation>Indicates that the individual lanes of the transportation object are represented.</documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="way">
+        <annotation>
+          <documentation>Indicates that the individual (carriage)ways of the transportation object are represented.</documentation>
+        </annotation>
+      </enumeration>
     </restriction>
   </simpleType>
-  <element abstract="true" name="AbstractGenericApplicationPropertyOfHole" type="anyType"/>
-  <element name="Hole" substitutionGroup="core:AbstractUnoccupiedSpace" type="tran:HoleType"/>
+  <element name="Hole" substitutionGroup="core:AbstractUnoccupiedSpace" type="tran:HoleType">
+    <annotation>
+      <documentation>A Hole is an opening in the surface of a Road, Track or Square such as road damages, manholes or drains. Holes can span multiple transportation objects.</documentation>
+    </annotation>
+  </element>
   <complexType name="HoleType">
     <complexContent>
       <extension base="core:AbstractUnoccupiedSpaceType">
         <sequence>
-          <element minOccurs="0" name="class" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" ref="tran:AbstractGenericApplicationPropertyOfHole"/>
+          <element minOccurs="0" name="class" type="gml:CodeType">
+            <annotation>
+              <documentation>Indicates the specific type of the Hole.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="adeOfHole" type="tran:ADEOfHolePropertyType">
+            <annotation>
+              <documentation>Augments the Hole with properties defined in an ADE.</documentation>
+            </annotation>
+          </element>
         </sequence>
       </extension>
     </complexContent>
@@ -184,13 +475,20 @@
     <attributeGroup ref="gml:AssociationAttributeGroup"/>
     <attributeGroup ref="gml:OwnershipAttributeGroup"/>
   </complexType>
-  <element abstract="true" name="AbstractGenericApplicationPropertyOfHoleSurface" type="anyType"/>
-  <element name="HoleSurface" substitutionGroup="core:AbstractThematicSurface" type="tran:HoleSurfaceType"/>
+  <element name="HoleSurface" substitutionGroup="core:AbstractThematicSurface" type="tran:HoleSurfaceType">
+    <annotation>
+      <documentation>A HoleSurface is a representation of the ground surface of a hole.</documentation>
+    </annotation>
+  </element>
   <complexType name="HoleSurfaceType">
     <complexContent>
       <extension base="core:AbstractThematicSurfaceType">
         <sequence>
-          <element maxOccurs="unbounded" minOccurs="0" ref="tran:AbstractGenericApplicationPropertyOfHoleSurface"/>
+          <element maxOccurs="unbounded" minOccurs="0" name="adeOfHoleSurface" type="tran:ADEOfHoleSurfacePropertyType">
+            <annotation>
+              <documentation>Augments the HoleSurface with properties defined in an ADE.</documentation>
+            </annotation>
+          </element>
         </sequence>
       </extension>
     </complexContent>
@@ -202,14 +500,25 @@
     <attributeGroup ref="gml:AssociationAttributeGroup"/>
     <attributeGroup ref="gml:OwnershipAttributeGroup"/>
   </complexType>
-  <element abstract="true" name="AbstractGenericApplicationPropertyOfIntersection" type="anyType"/>
-  <element name="Intersection" substitutionGroup="tran:AbstractTransportationSpace" type="tran:IntersectionType"/>
+  <element name="Intersection" substitutionGroup="tran:AbstractTransportationSpace" type="tran:IntersectionType">
+    <annotation>
+      <documentation>An Intersection is a transportation space that is a shared segment of multiple Road, Track, Railway, or Waterway objects (e.g. a crossing of two roads or a level crossing of a road and a railway).</documentation>
+    </annotation>
+  </element>
   <complexType name="IntersectionType">
     <complexContent>
       <extension base="tran:AbstractTransportationSpaceType">
         <sequence>
-          <element minOccurs="0" name="class" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" ref="tran:AbstractGenericApplicationPropertyOfIntersection"/>
+          <element minOccurs="0" name="class" type="gml:CodeType">
+            <annotation>
+              <documentation>Indicates the specific type of the Intersection.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="adeOfIntersection" type="tran:ADEOfIntersectionPropertyType">
+            <annotation>
+              <documentation>Augments the Intersection with properties defined in an ADE.</documentation>
+            </annotation>
+          </element>
         </sequence>
       </extension>
     </complexContent>
@@ -221,14 +530,25 @@
     <attributeGroup ref="gml:AssociationAttributeGroup"/>
     <attributeGroup ref="gml:OwnershipAttributeGroup"/>
   </complexType>
-  <element abstract="true" name="AbstractGenericApplicationPropertyOfMarking" type="anyType"/>
-  <element name="Marking" substitutionGroup="core:AbstractThematicSurface" type="tran:MarkingType"/>
+  <element name="Marking" substitutionGroup="core:AbstractThematicSurface" type="tran:MarkingType">
+    <annotation>
+      <documentation>A Marking is a visible pattern on a transportation area relevant to the structuring or restriction of traffic. Examples are road markings and markings related to railway or waterway traffic.</documentation>
+    </annotation>
+  </element>
   <complexType name="MarkingType">
     <complexContent>
       <extension base="core:AbstractThematicSurfaceType">
         <sequence>
-          <element minOccurs="0" name="class" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" ref="tran:AbstractGenericApplicationPropertyOfMarking"/>
+          <element minOccurs="0" name="class" type="gml:CodeType">
+            <annotation>
+              <documentation>Indicates the specific type of the Marking.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="adeOfMarking" type="tran:ADEOfMarkingPropertyType">
+            <annotation>
+              <documentation>Augments the Marking with properties defined in an ADE.</documentation>
+            </annotation>
+          </element>
         </sequence>
       </extension>
     </complexContent>
@@ -240,20 +560,34 @@
     <attributeGroup ref="gml:AssociationAttributeGroup"/>
     <attributeGroup ref="gml:OwnershipAttributeGroup"/>
   </complexType>
-  <element abstract="true" name="AbstractGenericApplicationPropertyOfRailway" type="anyType"/>
   <element name="Railway" substitutionGroup="tran:AbstractTransportationSpace" type="tran:RailwayType">
     <annotation>
-      <documentation>ISO 6707-1: National or regional transport system for guided passage of wheeled vehicles on rails</documentation>
+      <documentation>A Railway is a transportation space used by wheeled vehicles on rails.</documentation>
     </annotation>
   </element>
   <complexType name="RailwayType">
     <complexContent>
       <extension base="tran:AbstractTransportationSpaceType">
         <sequence>
-          <element minOccurs="0" name="class" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType"/>
+          <element minOccurs="0" name="class" type="gml:CodeType">
+            <annotation>
+              <documentation>Indicates the specific type of the Railway.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType">
+            <annotation>
+              <documentation>Specifies the intended purposes of the Railway.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType">
+            <annotation>
+              <documentation>Specifies the actual uses of the Railway.</documentation>
+            </annotation>
+          </element>
           <element maxOccurs="unbounded" minOccurs="0" name="section">
+            <annotation>
+              <documentation>Relates to the sections that are part of the Railway.</documentation>
+            </annotation>
             <complexType>
               <complexContent>
                 <extension base="gml:AbstractFeatureMemberType">
@@ -266,6 +600,9 @@
             </complexType>
           </element>
           <element maxOccurs="unbounded" minOccurs="0" name="intersection">
+            <annotation>
+              <documentation>Relates to the intersections that are part of the Railway.</documentation>
+            </annotation>
             <complexType>
               <complexContent>
                 <extension base="gml:AbstractFeatureMemberType">
@@ -277,7 +614,11 @@
               </complexContent>
             </complexType>
           </element>
-          <element maxOccurs="unbounded" minOccurs="0" ref="tran:AbstractGenericApplicationPropertyOfRailway"/>
+          <element maxOccurs="unbounded" minOccurs="0" name="adeOfRailway" type="tran:ADEOfRailwayPropertyType">
+            <annotation>
+              <documentation>Augments the Railway with properties defined in an ADE.</documentation>
+            </annotation>
+          </element>
         </sequence>
       </extension>
     </complexContent>
@@ -289,20 +630,34 @@
     <attributeGroup ref="gml:AssociationAttributeGroup"/>
     <attributeGroup ref="gml:OwnershipAttributeGroup"/>
   </complexType>
-  <element abstract="true" name="AbstractGenericApplicationPropertyOfRoad" type="anyType"/>
   <element name="Road" substitutionGroup="tran:AbstractTransportationSpace" type="tran:RoadType">
     <annotation>
-      <documentation>ISO 6707-1: Way mainly for vehicles</documentation>
+      <documentation>A Road is a transportation space used by vehicles, bicycles and/or pedestrians.</documentation>
     </annotation>
   </element>
   <complexType name="RoadType">
     <complexContent>
       <extension base="tran:AbstractTransportationSpaceType">
         <sequence>
-          <element minOccurs="0" name="class" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType"/>
+          <element minOccurs="0" name="class" type="gml:CodeType">
+            <annotation>
+              <documentation>Indicates the specific type of the Road.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType">
+            <annotation>
+              <documentation>Specifies the intended purposes of the Road.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType">
+            <annotation>
+              <documentation>Specifies the actual uses of the Road.</documentation>
+            </annotation>
+          </element>
           <element maxOccurs="unbounded" minOccurs="0" name="section">
+            <annotation>
+              <documentation>Relates to the sections that are part of the Road.</documentation>
+            </annotation>
             <complexType>
               <complexContent>
                 <extension base="gml:AbstractFeatureMemberType">
@@ -315,6 +670,9 @@
             </complexType>
           </element>
           <element maxOccurs="unbounded" minOccurs="0" name="intersection">
+            <annotation>
+              <documentation>Relates to the intersections that are part of the Road.</documentation>
+            </annotation>
             <complexType>
               <complexContent>
                 <extension base="gml:AbstractFeatureMemberType">
@@ -326,7 +684,11 @@
               </complexContent>
             </complexType>
           </element>
-          <element maxOccurs="unbounded" minOccurs="0" ref="tran:AbstractGenericApplicationPropertyOfRoad"/>
+          <element maxOccurs="unbounded" minOccurs="0" name="adeOfRoad" type="tran:ADEOfRoadPropertyType">
+            <annotation>
+              <documentation>Augments the Road with properties defined in an ADE.</documentation>
+            </annotation>
+          </element>
         </sequence>
       </extension>
     </complexContent>
@@ -338,14 +700,25 @@
     <attributeGroup ref="gml:AssociationAttributeGroup"/>
     <attributeGroup ref="gml:OwnershipAttributeGroup"/>
   </complexType>
-  <element abstract="true" name="AbstractGenericApplicationPropertyOfSection" type="anyType"/>
-  <element name="Section" substitutionGroup="tran:AbstractTransportationSpace" type="tran:SectionType"/>
+  <element name="Section" substitutionGroup="tran:AbstractTransportationSpace" type="tran:SectionType">
+    <annotation>
+      <documentation>A Section is a transportation space that is a segment of a Road, Railway, Track, or Waterway.</documentation>
+    </annotation>
+  </element>
   <complexType name="SectionType">
     <complexContent>
       <extension base="tran:AbstractTransportationSpaceType">
         <sequence>
-          <element minOccurs="0" name="class" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" ref="tran:AbstractGenericApplicationPropertyOfSection"/>
+          <element minOccurs="0" name="class" type="gml:CodeType">
+            <annotation>
+              <documentation>Indicates the specific type of the Section.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="adeOfSection" type="tran:ADEOfSectionPropertyType">
+            <annotation>
+              <documentation>Augments the Section with properties defined in an ADE.</documentation>
+            </annotation>
+          </element>
         </sequence>
       </extension>
     </complexContent>
@@ -357,20 +730,35 @@
     <attributeGroup ref="gml:AssociationAttributeGroup"/>
     <attributeGroup ref="gml:OwnershipAttributeGroup"/>
   </complexType>
-  <element abstract="true" name="AbstractGenericApplicationPropertyOfSquare" type="anyType"/>
   <element name="Square" substitutionGroup="tran:AbstractTransportationSpace" type="tran:SquareType">
     <annotation>
-      <documentation>SIG3D: Accessible, paved open space in a built-up area</documentation>
+      <documentation>A Square is a transportation space for unrestricted movement for vehicles, bicycles and/or pedestrians. This includes plazas as well as large sealed surfaces such as parking lots.</documentation>
     </annotation>
   </element>
   <complexType name="SquareType">
     <complexContent>
       <extension base="tran:AbstractTransportationSpaceType">
         <sequence>
-          <element minOccurs="0" name="class" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" ref="tran:AbstractGenericApplicationPropertyOfSquare"/>
+          <element minOccurs="0" name="class" type="gml:CodeType">
+            <annotation>
+              <documentation>Indicates the specific type of the Square.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType">
+            <annotation>
+              <documentation>Specifies the intended purposes of the Square.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType">
+            <annotation>
+              <documentation>Specifies the actual uses of the Square.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="adeOfSquare" type="tran:ADEOfSquarePropertyType">
+            <annotation>
+              <documentation>Augments the Square with properties defined in an ADE.</documentation>
+            </annotation>
+          </element>
         </sequence>
       </extension>
     </complexContent>
@@ -382,20 +770,34 @@
     <attributeGroup ref="gml:AssociationAttributeGroup"/>
     <attributeGroup ref="gml:OwnershipAttributeGroup"/>
   </complexType>
-  <element abstract="true" name="AbstractGenericApplicationPropertyOfTrack" type="anyType"/>
   <element name="Track" substitutionGroup="tran:AbstractTransportationSpace" type="tran:TrackType">
     <annotation>
-      <documentation>SIG3D: Way mainly for pedestrians or bicycle rider</documentation>
+      <documentation>A Track is a small path mainly used by pedestrians. Tracks can be segmented into Sections and Intersections.</documentation>
     </annotation>
   </element>
   <complexType name="TrackType">
     <complexContent>
       <extension base="tran:AbstractTransportationSpaceType">
         <sequence>
-          <element minOccurs="0" name="class" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType"/>
+          <element minOccurs="0" name="class" type="gml:CodeType">
+            <annotation>
+              <documentation>Indicates the specific type of the Track.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType">
+            <annotation>
+              <documentation>Specifies the intended purposes of the Track.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType">
+            <annotation>
+              <documentation>Specifies the actual uses of the Track.</documentation>
+            </annotation>
+          </element>
           <element maxOccurs="unbounded" minOccurs="0" name="section">
+            <annotation>
+              <documentation>Relates to the sections that are part of the Track.</documentation>
+            </annotation>
             <complexType>
               <complexContent>
                 <extension base="gml:AbstractFeatureMemberType">
@@ -408,6 +810,9 @@
             </complexType>
           </element>
           <element maxOccurs="unbounded" minOccurs="0" name="intersection">
+            <annotation>
+              <documentation>Relates to the intersections that are part of the Track.</documentation>
+            </annotation>
             <complexType>
               <complexContent>
                 <extension base="gml:AbstractFeatureMemberType">
@@ -419,7 +824,11 @@
               </complexContent>
             </complexType>
           </element>
-          <element maxOccurs="unbounded" minOccurs="0" ref="tran:AbstractGenericApplicationPropertyOfTrack"/>
+          <element maxOccurs="unbounded" minOccurs="0" name="adeOfTrack" type="tran:ADEOfTrackPropertyType">
+            <annotation>
+              <documentation>Augments the Track with properties defined in an ADE.</documentation>
+            </annotation>
+          </element>
         </sequence>
       </extension>
     </complexContent>
@@ -431,17 +840,40 @@
     <attributeGroup ref="gml:AssociationAttributeGroup"/>
     <attributeGroup ref="gml:OwnershipAttributeGroup"/>
   </complexType>
-  <element abstract="true" name="AbstractGenericApplicationPropertyOfTrafficArea" type="anyType"/>
-  <element name="TrafficArea" substitutionGroup="core:AbstractThematicSurface" type="tran:TrafficAreaType"/>
+  <element name="TrafficArea" substitutionGroup="core:AbstractThematicSurface" type="tran:TrafficAreaType">
+    <annotation>
+      <documentation>A TrafficArea is the ground surface of a TrafficSpace. Traffic areas are the surfaces upon which traffic actually takes place.</documentation>
+    </annotation>
+  </element>
   <complexType name="TrafficAreaType">
     <complexContent>
       <extension base="core:AbstractThematicSurfaceType">
         <sequence>
-          <element minOccurs="0" name="class" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType"/>
-          <element minOccurs="0" name="surfaceMaterial" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" ref="tran:AbstractGenericApplicationPropertyOfTrafficArea"/>
+          <element minOccurs="0" name="class" type="gml:CodeType">
+            <annotation>
+              <documentation>Indicates the specific type of the TrafficArea.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType">
+            <annotation>
+              <documentation>Specifies the intended purposes of the TrafficArea.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType">
+            <annotation>
+              <documentation>Specifies the actual uses of the TrafficArea.</documentation>
+            </annotation>
+          </element>
+          <element minOccurs="0" name="surfaceMaterial" type="gml:CodeType">
+            <annotation>
+              <documentation>Specifies the type of pavement of the TrafficArea.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="adeOfTrafficArea" type="tran:ADEOfTrafficAreaPropertyType">
+            <annotation>
+              <documentation>Augments the TrafficArea with properties defined in an ADE.</documentation>
+            </annotation>
+          </element>
         </sequence>
       </extension>
     </complexContent>
@@ -454,16 +886,30 @@
     <attributeGroup ref="gml:OwnershipAttributeGroup"/>
   </complexType>
   <simpleType name="TrafficDirectionValueType">
+    <annotation>
+      <documentation>TrafficDirectionValue enumerates the allowed directions of travel of a mobile object.</documentation>
+    </annotation>
     <restriction base="string">
-      <enumeration value="forwards"/>
-      <enumeration value="backwards"/>
-      <enumeration value="both"/>
+      <enumeration value="forwards">
+        <annotation>
+          <documentation>Indicates that traffic flows in the direction of the corresponding linear geometry.</documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="backwards">
+        <annotation>
+          <documentation>Indicates that traffic flows in the opposite direction of the corresponding linear geometry.</documentation>
+        </annotation>
+      </enumeration>
+      <enumeration value="both">
+        <annotation>
+          <documentation>Indicates that traffic flows in both directions.</documentation>
+        </annotation>
+      </enumeration>
     </restriction>
   </simpleType>
-  <element abstract="true" name="AbstractGenericApplicationPropertyOfTrafficSpace" type="anyType"/>
   <element name="TrafficSpace" substitutionGroup="core:AbstractUnoccupiedSpace" type="tran:TrafficSpaceType">
     <annotation>
-      <documentation>SIG3D: Space of movement for either trains, vehicles or pedestrians</documentation>
+      <documentation>A TrafficSpace is a space in which traffic takes place. Traffic includes the movement of entities such as trains, vehicles, pedestrians, ships, or other transportation types.</documentation>
     </annotation>
   </element>
   <complexType name="TrafficSpaceType">
@@ -472,25 +918,48 @@
         <sequence>
           <element minOccurs="0" name="class" type="gml:CodeType">
             <annotation>
-              <documentation>SIG3D: Classification of TrafficSpace as given by the relevant national regulations, information communities, or specific applications.</documentation>
+              <documentation>Indicates the specific type of the TrafficSpace.</documentation>
             </annotation>
           </element>
           <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType">
             <annotation>
-              <documentation>SIG3D: Specified function of TrafficSpace given by the relevant national regulations, information communities, or specific applications.</documentation>
+              <documentation>Specifies the intended purposes of the TrafficSpace.</documentation>
             </annotation>
           </element>
           <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType">
             <annotation>
-              <documentation>SIG3D: Actual usage of TrafficSpace as given by the relevant national regulations, information communities, or specific applications.</documentation>
+              <documentation>Specifies the actual uses of the TrafficSpace.</documentation>
             </annotation>
           </element>
-          <element name="granularity" type="tran:GranularityValueType"/>
-          <element minOccurs="0" name="trafficDirection" type="tran:TrafficDirectionValueType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="occupancy" type="core:OccupancyPropertyType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="predecessor" type="tran:TrafficSpacePropertyType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="successor" type="tran:TrafficSpacePropertyType"/>
+          <element name="granularity" type="tran:GranularityValueType">
+            <annotation>
+              <documentation>Defines whether traffic spaces are represented by individual ways or by individual lanes, depending on the desired level of detail.</documentation>
+            </annotation>
+          </element>
+          <element minOccurs="0" name="trafficDirection" type="tran:TrafficDirectionValueType">
+            <annotation>
+              <documentation>Indicates the direction of traffic flow relative to the corresponding linear geometry representation.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="occupancy" type="core:OccupancyPropertyType">
+            <annotation>
+              <documentation>Provides information on the residency of persons, vehicles, or other moving features in the TrafficSpace.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="predecessor" type="tran:TrafficSpacePropertyType">
+            <annotation>
+              <documentation>Indicates the predecessor(s) of the TrafficSpace.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="successor" type="tran:TrafficSpacePropertyType">
+            <annotation>
+              <documentation>Indicates the successor(s) of the TrafficSpace.</documentation>
+            </annotation>
+          </element>
           <element maxOccurs="unbounded" minOccurs="0" name="clearanceSpace">
+            <annotation>
+              <documentation>Relates to the clearance spaces that are part of the TrafficSpace.</documentation>
+            </annotation>
             <complexType>
               <complexContent>
                 <extension base="gml:AbstractFeatureMemberType">
@@ -502,7 +971,11 @@
               </complexContent>
             </complexType>
           </element>
-          <element maxOccurs="unbounded" minOccurs="0" ref="tran:AbstractGenericApplicationPropertyOfTrafficSpace"/>
+          <element maxOccurs="unbounded" minOccurs="0" name="adeOfTrafficSpace" type="tran:ADEOfTrafficSpacePropertyType">
+            <annotation>
+              <documentation>Augments the TrafficSpace with properties defined in an ADE.</documentation>
+            </annotation>
+          </element>
         </sequence>
       </extension>
     </complexContent>
@@ -514,16 +987,34 @@
     <attributeGroup ref="gml:AssociationAttributeGroup"/>
     <attributeGroup ref="gml:OwnershipAttributeGroup"/>
   </complexType>
-  <element abstract="true" name="AbstractGenericApplicationPropertyOfWaterway" type="anyType"/>
-  <element name="Waterway" substitutionGroup="tran:AbstractTransportationSpace" type="tran:WaterwayType"/>
+  <element name="Waterway" substitutionGroup="tran:AbstractTransportationSpace" type="tran:WaterwayType">
+    <annotation>
+      <documentation>A Waterway is a transportation space used for the movement of vessels upon or within a water body.</documentation>
+    </annotation>
+  </element>
   <complexType name="WaterwayType">
     <complexContent>
       <extension base="tran:AbstractTransportationSpaceType">
         <sequence>
-          <element minOccurs="0" name="class" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType"/>
-          <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType"/>
+          <element minOccurs="0" name="class" type="gml:CodeType">
+            <annotation>
+              <documentation>Indicates the specific type of the Waterway.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="function" type="gml:CodeType">
+            <annotation>
+              <documentation>Specifies the intended purposes of the Waterway.</documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0" name="usage" type="gml:CodeType">
+            <annotation>
+              <documentation>Specifies the actual uses of the Waterway.</documentation>
+            </annotation>
+          </element>
           <element maxOccurs="unbounded" minOccurs="0" name="section">
+            <annotation>
+              <documentation>Relates to the sections that are part of the Waterway.</documentation>
+            </annotation>
             <complexType>
               <complexContent>
                 <extension base="gml:AbstractFeatureMemberType">
@@ -536,6 +1027,9 @@
             </complexType>
           </element>
           <element maxOccurs="unbounded" minOccurs="0" name="intersection">
+            <annotation>
+              <documentation>Relates to the intersections that are part of the Waterway.</documentation>
+            </annotation>
             <complexType>
               <complexContent>
                 <extension base="gml:AbstractFeatureMemberType">
@@ -547,7 +1041,11 @@
               </complexContent>
             </complexType>
           </element>
-          <element maxOccurs="unbounded" minOccurs="0" ref="tran:AbstractGenericApplicationPropertyOfWaterway"/>
+          <element maxOccurs="unbounded" minOccurs="0" name="adeOfWaterway" type="tran:ADEOfWaterwayPropertyType">
+            <annotation>
+              <documentation>Augments the Waterway with properties defined in an ADE.</documentation>
+            </annotation>
+          </element>
         </sequence>
       </extension>
     </complexContent>
