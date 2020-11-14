@@ -36,7 +36,7 @@ The mapping makes use of the class 'BuildingConstructiveElement' that was newly 
 | IfcSlab             | BuildingConstructiveElement |
 | IfcMember           | BuildingConstructiveElement |
 | IfcDoor             | Door                        |
-| IfcWindow           | Windor                      |
+| IfcWindow           | Window                      |
 | IfcRailing          | BuildingInstallation        |
 | IfcStair            | BuildingInstallation        |
 
