@@ -1,0 +1,23 @@
+IFC-to-CityGML3
+Copyright (c) 2026 Thomas H. Kolbe (thomas.kolbe@tum.de), Chair of Geoinformatics, Technical University of Munich (TUM)
+https://www.asg.ed.tum.de/gis/startseite/
+
+This software uses the following third-party libraries:
+
+1. IfcOpenShell
+   License: GNU Lesser General Public License v3.0 (LGPL-3.0)
+   Website: http://ifcopenshell.org/
+   Copyright: IfcOpenShell contributors
+
+2. lxml
+   License: BSD 3-Clause License
+   Website: https://lxml.de/
+   Copyright: lxml contributors
+
+3. NumPy
+   License: BSD 3-Clause License
+   Website: https://numpy.org/
+   Copyright: NumPy contributors
+
+This software is licensed under the MIT License (see LICENSE file).
+The third-party libraries listed above retain their respective licenses.
