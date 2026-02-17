@@ -72,7 +72,7 @@ Each CityGML feature that was converted from an IFC object has a `<core:External
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ifc-to-citygml3.git
+git clone https://github.com/tum-gis/ifc-to-citygml3.git
 cd ifc-to-citygml3
 
 # Create and activate conda environment
@@ -87,7 +87,7 @@ python ifc2citygml.py --help
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ifc-to-citygml3.git
+git clone https://github.com/tum-gis/ifc-to-citygml3.git
 cd ifc-to-citygml3
 
 # Create virtual environment (optional but recommended)
@@ -109,12 +109,11 @@ A Dockerfile is provided for containerized usage:
 # Build the Docker image
 docker build -t ifc-to-citygml3 .
 
-# Run the converter
-docker run -v $(pwd)/input:/app/input -v $(pwd)/output:/app/output ifc-to-citygml3 \
-  python ifc2citygml.py input/model.ifc -o output/model.gml
+# Run the converter and show help
+docker run -v $(pwd):/app ifc-to-citygml3 -h
 
-# Or run interactively
-docker run -it -v $(pwd):/app ifc-to-citygml3 bash
+# Run a conversion
+docker run -v $(pwd):/app ifc-to-citygml3 input/AC20-FZK-Haus.ifc -o output/AC20-FZK-Haus.gml --georef-oktoberfest
 ```
 
 **Dockerfile Overview:**
