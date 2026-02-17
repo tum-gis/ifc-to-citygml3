@@ -109,11 +109,15 @@ A Dockerfile is provided for containerized usage:
 # Build the Docker image
 docker build -t ifc-to-citygml3 .
 
-# Run the converter and show help
+# Run the converter and show help (Linux / MacOS)
 docker run --rm -v $(pwd):/app ifc-to-citygml3 -h
+# Run the converter and show help (Windows Powershell)
+docker run --rm -v ${PWD}:/app ifc-to-citygml3 -h
 
-# Run a conversion
+# Run a conversion (Linux / MacOS)
 docker run --rm -v $(pwd):/app ifc-to-citygml3 input/AC20-FZK-Haus.ifc -o output/AC20-FZK-Haus.gml --georef-oktoberfest
+# Run a conversion (Windows Powershell)
+docker run --rm -v ${PWD}:/app ifc-to-citygml3 input/AC20-FZK-Haus.ifc -o output/AC20-FZK-Haus.gml --georef-oktoberfest
 ```
 
 **Dockerfile Overview:**
