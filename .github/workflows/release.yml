@@ -12,6 +12,7 @@ permissions:
 jobs:
   build-push:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -57,3 +58,5 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           provenance: false
+          cache-from: type=gha,scope=release
+          cache-to: type=gha,mode=max,scope=release
