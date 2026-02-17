@@ -101,23 +101,42 @@ pip install -r requirements.txt
 python ifc2citygml.py --help
 ```
 
-### Option 3: Docker Installation
+### Option 3: Docker
 
-A Dockerfile is provided for containerized usage:
+Pre-built multi-arch images (linux/amd64, linux/arm64) are available from:
+
+- **GHCR:** `ghcr.io/tum-gis/ifc-to-citygml3`
+- **DockerHub:** `docker.io/tum-gis/ifc-to-citygml3`
+
+**Available tags:**
+
+| Tag | Description |
+|-----|-------------|
+| `edge` | Latest build from `main` branch (development) |
+| `1.2.3` | Specific release version |
+| `1.2` | Latest patch of a minor version |
+| `1` | Latest minor/patch of a major version |
+| `latest` | Most recent release |
 
 ```bash
-# Build the Docker image
-docker build -t ifc-to-citygml3 .
+# Pull the image
+docker pull ghcr.io/tum-gis/ifc-to-citygml3:latest
 
 # Run the converter and show help (Linux / MacOS)
-docker run --rm -v $(pwd):/app ifc-to-citygml3 -h
+docker run --rm -v $(pwd):/app ghcr.io/tum-gis/ifc-to-citygml3:latest -h
 # Run the converter and show help (Windows Powershell)
-docker run --rm -v ${PWD}:/app ifc-to-citygml3 -h
+docker run --rm -v ${PWD}:/app ghcr.io/tum-gis/ifc-to-citygml3:latest -h
 
 # Run a conversion (Linux / MacOS)
-docker run --rm -v $(pwd):/app ifc-to-citygml3 input/AC20-FZK-Haus.ifc -o output/AC20-FZK-Haus.gml --georef-oktoberfest
+docker run --rm -v $(pwd):/app ghcr.io/tum-gis/ifc-to-citygml3:latest input/AC20-FZK-Haus.ifc -o output/AC20-FZK-Haus.gml --georef-oktoberfest
 # Run a conversion (Windows Powershell)
-docker run --rm -v ${PWD}:/app ifc-to-citygml3 input/AC20-FZK-Haus.ifc -o output/AC20-FZK-Haus.gml --georef-oktoberfest
+docker run --rm -v ${PWD}:/app ghcr.io/tum-gis/ifc-to-citygml3:latest input/AC20-FZK-Haus.ifc -o output/AC20-FZK-Haus.gml --georef-oktoberfest
+```
+
+You can also build the image locally:
+
+```bash
+docker build -t ifc-to-citygml3 .
 ```
 
 **Dockerfile Overview:**
