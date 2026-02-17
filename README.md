@@ -72,7 +72,7 @@ Each CityGML feature that was converted from an IFC object has a `<core:External
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ifc-to-citygml3.git
+git clone https://github.com/tum-gis/ifc-to-citygml3.git
 cd ifc-to-citygml3
 
 # Create and activate conda environment
@@ -87,7 +87,7 @@ python ifc2citygml.py --help
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ifc-to-citygml3.git
+git clone https://github.com/tum-gis/ifc-to-citygml3.git
 cd ifc-to-citygml3
 
 # Create virtual environment (optional but recommended)
