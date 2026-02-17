@@ -286,12 +286,14 @@ Below are some screenshots of the transformed 'FZKHaus' data set visualised usin
 - All constructive IFC elements are exported as either `<bldg:BuildingConstructiveElement>`, `<bldg:BuildingInstallation>`, `<bldg:BuildingFurniture>` (specific IFC subclasses provided in `<class>` attribute)
 - All geometries are triangulated (incl. curved geometries, CSG and Sweep geometries)
 - Some IFC properties may not map perfectly to CityGML generic attributes
+- Both the IFC model and the generated CityGML model are kept in RAM. This might become problematic for huge IFC models. Nevertheless, I succesfully converted a 1.2GB IFC file into a 2GB CityGML file without problems.
 
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request. Some ideas for future improvements would be:
 - Parallelization - most of the computation time is spent by IFCOpenShell for the geometry conversion from different 3D solid representations to 3D BRep solids. This process can be parallelized and IFCOpenShell even suggests a way to do this, but it would require to have some major restructuring of the code, because first all geometries from all kinds of objects would need to be collected, then converted, and then afterwards be utilized at the proper steps of the CityGML output process.
 - Try to avoid triangulation (where possible) and output polygons (also with holes) instead as parts of the shells of BRep solids.
+- Check, if the output file already exists and ask the user whether it should be overwritten. Currently, the program always replaces an existing output file without further notification.
 - Support for building objects related to air conditioning, plumbing or cabling. In a first step, all of these objects could be exported as `BuildingInstallation` features. In the long run it would be desirable to export such objects as features of the CityGML Utility Network ADE.
 - Support for further IFC object types like `IfcBridge`, `IfcTunnel`, `IfcRail`, `IfcRoad`
 - Add further ways to try to extract georeferencing information, especially from datasets using older IFC versions (2X3).
