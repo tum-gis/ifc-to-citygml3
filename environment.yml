@@ -1,0 +1,10 @@
+name: ifc2citygml
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - ifcopenshell
+  - lxml
+  - numpy
+  - pip

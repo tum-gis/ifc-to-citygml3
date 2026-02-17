@@ -1,0 +1,11 @@
+# IFC to CityGML 3.0 Converter - Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# IFC file parsing and geometry processing
+ifcopenshell
+
+# XML processing for CityGML generation
+lxml
+
+# Numerical operations for coordinate transformations
+numpy
