@@ -1,5 +1,9 @@
 # IFC to CityGML 3.0 Converter
-# Written by Thomas H. Kolbe, Last change: 2026-02-13
+#
+# Written by Thomas H. Kolbe (thomas.kolbe@tum.de), Chair of Geoinformatics, 
+# School of Engineering and Design, Technical University of Munich
+#
+# Version 0.9, Last change: 2026-02-16
 
 import ifcopenshell
 import ifcopenshell.geom
