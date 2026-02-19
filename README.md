@@ -249,13 +249,16 @@ The generated CityGML 3.0 file contains:
   <core:cityObjectMember>
     <bldg:Building>
       <!-- Metadata (gml:name, gml:description) -->
-      <!-- External references to IFC -->
+      <!-- External reference to IFC object -->
       <!-- Generic attributes (IFC properties) -->
       
       <!-- BuildingConstructiveElements (Walls, Slabs, etc.) -->
       <bldg:buildingConstructiveElement>
         <bldg:BuildingConstructiveElement>
-          <!-- Appearance with materials/colors (multi-texturing supported) -->
+          <!-- Metadata (gml:name, gml:description) -->
+          <!-- External reference to IFC object -->
+          <!-- Generic attributes (IFC properties) -->
+          <!-- Appearances with materials/colors (multiple appearances per object supported) -->
           <core:appearance>
             <app:Appearance>
               <app:theme>RGB</app:theme>
