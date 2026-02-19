@@ -3,7 +3,13 @@
 # Written by Thomas H. Kolbe (thomas.kolbe@tum.de), Chair of Geoinformatics, 
 # School of Engineering and Design, Technical University of Munich
 #
-# Version 0.9, Last change: 2026-02-16
+# Version 0.9.1, Last change: 2026-02-19
+#
+# This version supports multi-appearance/multi-texturing:
+# - Multiple materials can be assigned to different faces of a geometry
+# - Each surface gets a unique ID for targeted appearance mapping
+# - Supports per-face colors from IFC (IfcIndexedColourMap, IfcMaterialConstituentSet)
+# - Generates one Appearance element per CityGML feature with multiple X3DMaterial children
 
 import ifcopenshell
 import ifcopenshell.geom
@@ -20,6 +26,7 @@ NSMAP = {
     'bldg': "http://www.opengis.net/citygml/building/3.0",
     'con': "http://www.opengis.net/citygml/construction/3.0",
     'gen': "http://www.opengis.net/citygml/generics/3.0",
+    'app': "http://www.opengis.net/citygml/appearance/3.0",
     'gml': "http://www.opengis.net/gml/3.2",
     'xsi': "http://www.w3.org/2001/XMLSchema-instance",
     'xlink': "http://www.w3.org/1999/xlink"
@@ -37,7 +44,8 @@ SOLID_REPRESENTATION_TYPES = {
 }
 
 class CityGMLGenerator:
-    def __init__(self, input_path, output_path, no_references=False, reorient_shells=False, no_properties=False, georef_oktoberfest=False, list_unmapped_doors_windows=False, unrelated_doors_windows_in_dummy_bce=False, no_generic_attribute_sets=False, pset_names_as_prefixes=False, no_storeys=False, xoffset=0.0, yoffset=0.0, zoffset=0.0):
+    def __init__(self, input_path, output_path, no_references=False, reorient_shells=False, no_properties=False, georef_oktoberfest=False, list_unmapped_doors_windows=False, unrelated_doors_windows_in_dummy_bce=False, no_generic_attribute_sets=False, pset_names_as_prefixes=False, no_storeys=False, no_appearances=False, xoffset=0.0, yoffset=0.0, zoffset=0.0):
+        """Initialize the CityGML generator with input/output paths and processing options."""
         self.input_path = input_path
         self.filename = os.path.basename(input_path)
         self.output_path = output_path
@@ -57,6 +65,8 @@ class CityGMLGenerator:
         self.pset_names_as_prefixes = pset_names_as_prefixes
         # If true, do not export CityGML Storey objects
         self.no_storeys = no_storeys
+        # If true, do not export CityGML appearance elements (colors/materials)
+        self.no_appearances = no_appearances
         # XYZ offsets to shift the model (applied after georeferencing)
         self.xoffset = xoffset
         self.yoffset = yoffset
@@ -102,6 +112,7 @@ class CityGMLGenerator:
             print(f"Georeference set to Theresienwiese in Munich (EPSG:25832): E={self.eastings:.3f}, N={self.northings:.3f}, H={self.orthogonal_height}")
 
     def _setup_georeferencing(self):
+        """Extract georeferencing parameters from IFC model (IfcMapConversion, IfcProjectedCRS)."""
         try:
             map_conversions = self.model.by_type("IfcMapConversion")
         except RuntimeError:
@@ -134,6 +145,7 @@ class CityGMLGenerator:
             print("No IfcMapConversion found. Using local coordinates.")
 
     def transform_vertex(self, vertex):
+        """Apply georeferencing transformation (scale, rotation, translation) to a vertex."""
         v = np.array(vertex) * self.scale
         v = np.dot(self.rotation_matrix, v)
         v[0] += self.eastings + self.xoffset
@@ -142,6 +154,7 @@ class CityGMLGenerator:
         return v
 
     def create_external_reference(self, parent_element, ifc_guid):
+        """Create a CityGML external reference linking to the original IFC element by GUID."""
         if getattr(self, 'no_references', False):
             return
 
@@ -153,6 +166,7 @@ class CityGMLGenerator:
         system.text = self.filename        
 
     def add_properties(self, city_object, ifc_element):
+        """Add IFC property sets as CityGML generic attributes to a feature."""
         # Skip exporting properties when requested
         if getattr(self, 'no_properties', False):
             return
@@ -255,12 +269,15 @@ class CityGMLGenerator:
         
         return doors_and_windows
 
-    def _add_door_or_window_as_filling(self, parent_element, door_or_window):
+    def _add_door_or_window_as_filling(self, parent_element, door_or_window, building_appearance_count):
         """
         Adds a Door or Window as a filling element (con:filling) to the parent element.
         This is the proper CityGML 3.0 way to represent openings in constructive elements.
+        Also adds appearance information if the door/window has colors/materials.
+        Returns the number of materials added for appearance tracking.
         """
         dw_type = "Door" if door_or_window.is_a("IfcDoor") else "Window"
+        materials_added = 0
         
         # Create filling element as child of the parent (Construction module)
         dw_prop = etree.SubElement(parent_element, f"{{{NSMAP['con']}}}filling")
@@ -278,31 +295,45 @@ class CityGMLGenerator:
             name_elem.text = door_or_window.Name
 
         self.create_external_reference(dw_elem, getattr(door_or_window, 'GlobalId', 'UNKNOWN'))
+        
+        # Generate geometry with surface IDs and per-face materials for multi-appearance support
+        dw_is_solid = self.is_intended_solid(door_or_window)
+        dw_polygons, dw_surface_ids, dw_face_materials = self.get_geometry_with_surface_ids(door_or_window)
+        dw_geometry_id = f"UUID_{uuid.uuid4()}" if dw_polygons else None
+        
+        # Add appearance if door/window has color information (before generic attributes)
+        # Pass surface_ids and face_materials for per-face targeting
+        if dw_geometry_id:
+            success, mat_count = self.add_appearance(dw_elem, door_or_window, f"DW_{id(door_or_window)}", dw_geometry_id, dw_surface_ids, dw_face_materials)
+            if success:
+                materials_added = mat_count
+        
+        # Add generic attributes (after appearance)
         self.add_properties(dw_elem, door_or_window)
 
-        # Get door/window geometry
-        dw_is_solid = self.is_intended_solid(door_or_window)
-        dw_polygons = self.get_geometry(door_or_window)
-
+        # Output geometry (after generic attributes)
         if dw_polygons:
             if dw_is_solid:
                 dw_lod3 = etree.SubElement(dw_elem, f"{{{NSMAP['core']}}}lod3Solid")
-                dw_solid = etree.SubElement(dw_lod3, f"{{{NSMAP['gml']}}}Solid", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}", "srsName": self.srs_name, "srsDimension": "3"})
+                dw_solid = etree.SubElement(dw_lod3, f"{{{NSMAP['gml']}}}Solid", attrib={f"{{{NSMAP['gml']}}}id": dw_geometry_id, "srsName": self.srs_name, "srsDimension": "3"})
                 dw_exterior = etree.SubElement(dw_solid, f"{{{NSMAP['gml']}}}exterior")
                 dw_shell = etree.SubElement(dw_exterior, f"{{{NSMAP['gml']}}}Shell")
                 dw_parent = dw_shell
             else:
                 dw_lod3 = etree.SubElement(dw_elem, f"{{{NSMAP['core']}}}lod3MultiSurface")
-                dw_ms = etree.SubElement(dw_lod3, f"{{{NSMAP['gml']}}}MultiSurface", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}", "srsName": self.srs_name, "srsDimension": "3"})
+                dw_ms = etree.SubElement(dw_lod3, f"{{{NSMAP['gml']}}}MultiSurface", attrib={f"{{{NSMAP['gml']}}}id": dw_geometry_id, "srsName": self.srs_name, "srsDimension": "3"})
                 dw_parent = dw_ms
 
-            for poly_coords in dw_polygons:
+            # Use the pre-generated surface_ids for each polygon
+            for poly_coords, surface_id in zip(dw_polygons, dw_surface_ids):
                 sm = etree.SubElement(dw_parent, f"{{{NSMAP['gml']}}}surfaceMember")
-                poly = etree.SubElement(sm, f"{{{NSMAP['gml']}}}Polygon", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}"})
+                poly = etree.SubElement(sm, f"{{{NSMAP['gml']}}}Polygon", attrib={f"{{{NSMAP['gml']}}}id": surface_id})
                 ext = etree.SubElement(poly, f"{{{NSMAP['gml']}}}exterior")
                 lr = etree.SubElement(ext, f"{{{NSMAP['gml']}}}LinearRing")
                 pos = etree.SubElement(lr, f"{{{NSMAP['gml']}}}posList")
                 pos.text = " ".join(f"{c:.3f}" for c in poly_coords)
+        
+        return materials_added
 
     def is_intended_solid(self, element):
         """
@@ -360,7 +391,438 @@ class CityGMLGenerator:
         except:
             return None
 
+    def get_geometry_with_surface_ids(self, element):
+        """
+        Extracts geometry with unique surface IDs for each polygon.
+        Also extracts per-face material information from IfcOpenShell.
+        Returns a tuple: (polygons, surface_ids, face_materials) where:
+        - polygons is a list of polygon coordinates
+        - surface_ids is a list of UUIDs corresponding to each polygon
+        - face_materials is a list of (r, g, b) tuples for each polygon (or None if no material)
+        """
+        try:
+            shape = ifcopenshell.geom.create_shape(self.settings, element)
+            geom = shape.geometry
+            verts = geom.verts
+            faces = geom.faces
+            
+            raw_verts = np.array(verts).reshape(-1, 3)
+            polygons = []
+            surface_ids = []
+            face_materials = []
+            
+            # Extract material information if available (including transparency)
+            materials_list = []
+            if hasattr(geom, 'materials') and geom.materials:
+                for mat in geom.materials:
+                    color = None
+                    transparency = 0.0
+                    
+                    # Extract diffuse color
+                    if hasattr(mat, 'diffuse'):
+                        diffuse = mat.diffuse
+                        if hasattr(diffuse, 'r') and hasattr(diffuse, 'g') and hasattr(diffuse, 'b'):
+                            try:
+                                r_val = diffuse.r() if callable(diffuse.r) else diffuse.r
+                                g_val = diffuse.g() if callable(diffuse.g) else diffuse.g
+                                b_val = diffuse.b() if callable(diffuse.b) else diffuse.b
+                                color = (r_val, g_val, b_val)
+                            except:
+                                pass
+                        elif hasattr(diffuse, 'colour'):
+                            col = diffuse.colour
+                            if hasattr(col, 'r') and hasattr(col, 'g') and hasattr(col, 'b'):
+                                try:
+                                    r_val = col.r() if callable(col.r) else col.r
+                                    g_val = col.g() if callable(col.g) else col.g
+                                    b_val = col.b() if callable(col.b) else col.b
+                                    color = (r_val, g_val, b_val)
+                                except:
+                                    pass
+                        elif isinstance(diffuse, tuple) and len(diffuse) >= 3:
+                            color = (diffuse[0], diffuse[1], diffuse[2])
+                    
+                    # Extract transparency
+                    if hasattr(mat, 'transparency'):
+                        try:
+                            trans_val = mat.transparency() if callable(mat.transparency) else mat.transparency
+                            if trans_val is not None and trans_val > 0:
+                                transparency = trans_val
+                        except:
+                            pass
+                    
+                    if color:
+                        materials_list.append((color[0], color[1], color[2], transparency))
+            
+            # Get material IDs per face
+            material_ids = []
+            if hasattr(geom, 'material_ids') and geom.material_ids:
+                material_ids = list(geom.material_ids)
+            
+            for i in range(0, len(faces), 3):
+                idx = [faces[i], faces[i+1], faces[i+2]]
+                poly_coords = []
+                for id in idx:
+                    v = self.transform_vertex(raw_verts[id])
+                    poly_coords.extend(v)
+                
+                v_start = self.transform_vertex(raw_verts[idx[0]])
+                poly_coords.extend(v_start)
+                polygons.append(poly_coords)
+                surface_ids.append(f"UUID_{uuid.uuid4()}")
+                
+                # Get material for this face
+                face_idx = i // 3
+                if material_ids and face_idx < len(material_ids):
+                    mat_id = material_ids[face_idx]
+                    if mat_id < len(materials_list):
+                        face_materials.append(materials_list[mat_id])
+                    else:
+                        face_materials.append(None)
+                else:
+                    face_materials.append(None)
+                
+            return polygons, surface_ids, face_materials
+        except:
+            return None, None, None
+
+    def get_element_color(self, element):
+        """
+        Extracts color information from an IFC element.
+        Returns a tuple (red, green, blue) with values 0.0-1.0, or None if no color is found.
+        """
+        try:
+            # Check if element has representation with styled items
+            if hasattr(element, 'Representation') and element.Representation:
+                for rep in element.Representation.Representations:
+                    for item in rep.Items:
+                        # Check for IfcStyledItem directly
+                        if item.is_a('IfcStyledItem'):
+                            return self._extract_color_from_style(item)
+                        # Check for StyledByItem attribute (IfcExtrudedAreaSolid, etc.)
+                        if hasattr(item, 'StyledByItem') and item.StyledByItem:
+                            for styled_item in item.StyledByItem:
+                                if styled_item.is_a('IfcStyledItem'):
+                                    return self._extract_color_from_style(styled_item)
+                        # Check for mapped representations
+                        if item.is_a('IfcMappedItem'):
+                            mapping_source = item.MappingSource
+                            if mapping_source and mapping_source.MappedRepresentation:
+                                for mapped_item in mapping_source.MappedRepresentation.Items:
+                                    if mapped_item.is_a('IfcStyledItem'):
+                                        return self._extract_color_from_style(mapped_item)
+                                    # Also check StyledByItem for mapped items
+                                    if hasattr(mapped_item, 'StyledByItem') and mapped_item.StyledByItem:
+                                        for styled_item in mapped_item.StyledByItem:
+                                            if styled_item.is_a('IfcStyledItem'):
+                                                return self._extract_color_from_style(styled_item)
+            
+            # Check for material associations
+            if hasattr(element, 'HasAssociations') and element.HasAssociations:
+                for association in element.HasAssociations:
+                    if association.is_a('IfcRelAssociatesMaterial'):
+                        material = association.RelatingMaterial
+                        if material:
+                            color = self._get_material_color(material)
+                            if color:
+                                return color
+            
+            return None
+        except Exception as e:
+            return None
+
+    def _extract_color_from_style(self, styled_item):
+        """Extract color from IfcStyledItem, supporting IfcPresentationStyleAssignment."""
+        try:
+            if hasattr(styled_item, 'Styles') and styled_item.Styles:
+                for style in styled_item.Styles:
+                    # Handle IfcSurfaceStyle directly
+                    if style.is_a('IfcSurfaceStyle'):
+                        for surface_style in style.Styles:
+                            if surface_style.is_a('IfcSurfaceStyleShading'):
+                                color = surface_style.SurfaceColour
+                                if color:
+                                    return (color.Red, color.Green, color.Blue)
+                    # Handle IfcPresentationStyleAssignment (common in IFC4)
+                    elif style.is_a('IfcPresentationStyleAssignment'):
+                        if hasattr(style, 'Styles') and style.Styles:
+                            for inner_style in style.Styles:
+                                if inner_style.is_a('IfcSurfaceStyle'):
+                                    for surface_style in inner_style.Styles:
+                                        if surface_style.is_a('IfcSurfaceStyleShading'):
+                                            color = surface_style.SurfaceColour
+                                            if color:
+                                                return (color.Red, color.Green, color.Blue)
+            return None
+        except:
+            return None
+
+    def _get_material_color(self, material):
+        """Extract color from material definition."""
+        try:
+            if material.is_a('IfcMaterial'):
+                # Check for material definition representation
+                if hasattr(material, 'HasRepresentation') and material.HasRepresentation:
+                    for rep in material.HasRepresentation:
+                        if rep.is_a('IfcMaterialDefinitionRepresentation'):
+                            for mat_rep in rep.Representations:
+                                for item in mat_rep.Items:
+                                    if item.is_a('IfcStyledItem'):
+                                        return self._extract_color_from_style(item)
+            # Handle IfcMaterialLayerSetUsage and IfcMaterialLayerSet
+            elif material.is_a('IfcMaterialLayerSetUsage') or material.is_a('IfcMaterialLayerSet'):
+                # Try to get color from the first layer's material
+                layers = getattr(material, 'MaterialLayers', None) or getattr(material, 'ForLayerSet', None)
+                if layers and len(layers) > 0:
+                    layer_material = layers[0].Material
+                    if layer_material:
+                        return self._get_material_color(layer_material)
+            return None
+        except:
+            return None
+
+    def get_element_materials_with_faces(self, element):
+        """
+        Extracts materials/colors with their associated face indices from an IFC element.
+        This supports multi-appearance by mapping different materials to different geometry parts.
+        
+        Returns a list of tuples: [(color, face_indices), ...] where:
+        - color is a tuple (red, green, blue) with values 0.0-1.0
+        - face_indices is a list of face indices this material applies to (or None for all faces)
+        
+        Collects ALL colors from ALL styled items, not just the first one.
+        """
+        try:
+            materials_with_faces = []
+            seen_colors = set()  # Track unique colors to avoid duplicates
+            
+            def add_color_if_unique(color, face_indices):
+                """Add a color to materials list if not already present (avoids duplicates)."""
+                color_key = (round(color[0], 6), round(color[1], 6), round(color[2], 6))
+                if color_key not in seen_colors:
+                    seen_colors.add(color_key)
+                    materials_with_faces.append((color, face_indices))
+            
+            def extract_colors_from_item(item):
+                """Recursively extract colors from a geometry item and its mapped representations."""
+                # Check for StyledByItem (common in IFC4)
+                if hasattr(item, 'StyledByItem') and item.StyledByItem:
+                    for styled_item in item.StyledByItem:
+                        if styled_item.is_a('IfcStyledItem'):
+                            color = self._extract_color_from_style(styled_item)
+                            if color:
+                                add_color_if_unique(color, None)
+                
+                # Check for IfcMappedItem and recurse into mapped representation
+                if item.is_a('IfcMappedItem'):
+                    mapping_source = item.MappingSource
+                    if mapping_source and mapping_source.MappedRepresentation:
+                        for mapped_item in mapping_source.MappedRepresentation.Items:
+                            extract_colors_from_item(mapped_item)
+                
+                # Check for IfcTriangulatedFaceSet with per-face colors
+                if item.is_a('IfcTriangulatedFaceSet'):
+                    if hasattr(item, 'HasColours') and item.HasColours:
+                        colours = item.HasColours
+                        if colours.is_a('IfcIndexedColourMap'):
+                            color_list = colours.Colours
+                            color_index = colours.ColourIndex
+                            
+                            if color_list and color_index:
+                                color_faces = {}
+                                for face_idx, color_idx in enumerate(color_index):
+                                    if color_idx not in color_faces:
+                                        color_faces[color_idx] = []
+                                    color_faces[color_idx].append(face_idx)
+                                
+                                for color_idx, face_indices in color_faces.items():
+                                    if hasattr(color_list, 'Colours'):
+                                        color_data = color_list.Colours[color_idx - 1]
+                                        if color_data:
+                                            color = (color_data.Red, color_data.Green, color_data.Blue)
+                                            add_color_if_unique(color, face_indices)
+            
+            # Check if element has representation with styled items
+            if hasattr(element, 'Representation') and element.Representation:
+                for rep in element.Representation.Representations:
+                    if rep.RepresentationIdentifier in ['Body', 'Mesh', 'FacetedBrep']:
+                        for item in rep.Items:
+                            extract_colors_from_item(item)
+            
+            # Check for material associations with material sets
+            if hasattr(element, 'HasAssociations') and element.HasAssociations:
+                for association in element.HasAssociations:
+                    if association.is_a('IfcRelAssociatesMaterial'):
+                        material = association.RelatingMaterial
+                        
+                        # Handle IfcMaterialConstituentSet
+                        if material and material.is_a('IfcMaterialConstituentSet'):
+                            if hasattr(material, 'MaterialConstituents') and material.MaterialConstituents:
+                                for constituent in material.MaterialConstituents:
+                                    if hasattr(constituent, 'Material') and constituent.Material:
+                                        color = self._get_material_color(constituent.Material)
+                                        if color:
+                                            add_color_if_unique(color, None)
+                        
+                        # Handle IfcMaterialLayerSetUsage
+                        elif material and (material.is_a('IfcMaterialLayerSetUsage') or material.is_a('IfcMaterialLayerSet')):
+                            layers = getattr(material, 'ForLayerSet', None) or material
+                            if hasattr(layers, 'MaterialLayers'):
+                                for layer in layers.MaterialLayers:
+                                    if hasattr(layer, 'Material') and layer.Material:
+                                        color = self._get_material_color(layer.Material)
+                                        if color:
+                                            add_color_if_unique(color, None)
+                        
+                        # Single material
+                        elif material:
+                            color = self._get_material_color(material)
+                            if color:
+                                add_color_if_unique(color, None)
+            
+            # If we found materials, return them
+            if materials_with_faces:
+                return materials_with_faces
+            
+            # Fallback: try to get a single color for the whole element
+            color = self.get_element_color(element)
+            if color:
+                return [(color, None)]
+            
+            return []
+        except Exception as e:
+            return []
+
+    def add_appearance(self, parent_element, element, element_id, geometry_id, surface_ids=None, face_materials=None):
+        """
+        Adds CityGML appearance elements if the IFC element has color information.
+        Supports multi-appearance with multiple materials targeting different surfaces.
+        
+        Args:
+            parent_element: The CityGML element to add appearance to
+            element: The IFC element
+            element_id: The gml:id of the CityGML element
+            geometry_id: The gml:id of the geometry (Solid or MultiSurface)
+            surface_ids: Optional list of surface IDs corresponding to each polygon face
+            face_materials: Optional list of (r, g, b, transparency) tuples per face from IfcOpenShell
+        
+        Returns:
+            tuple: (success: bool, material_count: int) - success flag and number of materials added
+        """
+        # Skip if appearances are disabled
+        if getattr(self, 'no_appearances', False):
+            return False, 0
+        
+        # If we have per-face materials from IfcOpenShell, use those (most accurate)
+        if face_materials and surface_ids:
+            # Group faces by material color and transparency
+            material_faces = {}
+            for face_idx, mat_data in enumerate(face_materials):
+                if mat_data is not None:
+                    # mat_data is (r, g, b, transparency) tuple
+                    if len(mat_data) >= 3:
+                        r, g, b = mat_data[0], mat_data[1], mat_data[2]
+                        transparency = mat_data[3] if len(mat_data) > 3 else 0.0
+                        # Round to avoid floating point comparison issues
+                        material_key = (round(r, 6), round(g, 6), round(b, 6), round(transparency, 6))
+                        if material_key not in material_faces:
+                            material_faces[material_key] = []
+                        material_faces[material_key].append(face_idx)
+            
+            if material_faces:
+                try:
+                    app_member = etree.SubElement(parent_element, f"{{{NSMAP['core']}}}appearance")
+                    appearance = etree.SubElement(app_member, f"{{{NSMAP['app']}}}Appearance")
+                    appearance.set(f"{{{NSMAP['gml']}}}id", f"APP_{element_id}")
+                    
+                    theme = etree.SubElement(appearance, f"{{{NSMAP['app']}}}theme")
+                    theme.text = "RGB"
+                    
+                    material_count = 0
+                    
+                    for mat_idx, (material_key, face_indices) in enumerate(material_faces.items()):
+                        r, g, b, transparency = material_key
+                        
+                        surface_data_member = etree.SubElement(appearance, f"{{{NSMAP['app']}}}surfaceData")
+                        x3d_material = etree.SubElement(surface_data_member, f"{{{NSMAP['app']}}}X3DMaterial")
+                        x3d_material.set(f"{{{NSMAP['gml']}}}id", f"MAT_{element_id}_{mat_idx}")
+                        
+                        is_front = etree.SubElement(x3d_material, f"{{{NSMAP['app']}}}isFront")
+                        is_front.text = "true"
+                        
+                        diffuse_color = etree.SubElement(x3d_material, f"{{{NSMAP['app']}}}diffuseColor")
+                        diffuse_color.text = f"{r} {g} {b}"
+                        
+                        # Add transparency if > 0
+                        if transparency > 0:
+                            trans_elem = etree.SubElement(x3d_material, f"{{{NSMAP['app']}}}transparency")
+                            trans_elem.text = f"{transparency}"
+                        
+                        # Add targets for each face with this material
+                        for face_idx in face_indices:
+                            if 0 <= face_idx < len(surface_ids):
+                                target = etree.SubElement(x3d_material, f"{{{NSMAP['app']}}}target")
+                                target.text = f"#{surface_ids[face_idx]}"
+                        
+                        material_count += 1
+                    
+                    return True, material_count
+                except Exception as e:
+                    return False, 0
+        
+        # Fallback: use get_element_materials_with_faces (less accurate, no per-face mapping)
+        materials_with_faces = self.get_element_materials_with_faces(element)
+        
+        if not materials_with_faces:
+            return False, 0
+        
+        try:
+            # Create appearance member
+            app_member = etree.SubElement(parent_element, f"{{{NSMAP['core']}}}appearance")
+            appearance = etree.SubElement(app_member, f"{{{NSMAP['app']}}}Appearance")
+            appearance.set(f"{{{NSMAP['gml']}}}id", f"APP_{element_id}")
+            
+            # Add theme
+            theme = etree.SubElement(appearance, f"{{{NSMAP['app']}}}theme")
+            theme.text = "RGB"
+            
+            material_count = 0
+            
+            # Create X3DMaterial for each unique material
+            for mat_idx, (color, face_indices) in enumerate(materials_with_faces):
+                # Add surface data with target reference to geometry
+                surface_data_member = etree.SubElement(appearance, f"{{{NSMAP['app']}}}surfaceData")
+                x3d_material = etree.SubElement(surface_data_member, f"{{{NSMAP['app']}}}X3DMaterial")
+                x3d_material.set(f"{{{NSMAP['gml']}}}id", f"MAT_{element_id}_{mat_idx}")
+                
+                # Add isFront (must come first)
+                is_front = etree.SubElement(x3d_material, f"{{{NSMAP['app']}}}isFront")
+                is_front.text = "true"
+                
+                # Add diffuse color
+                diffuse_color = etree.SubElement(x3d_material, f"{{{NSMAP['app']}}}diffuseColor")
+                diffuse_color.text = f"{color[0]} {color[1]} {color[2]}"
+                
+                # Add target reference(s) to the geometry
+                if face_indices and surface_ids:
+                    # Multi-appearance: target specific surfaces by their IDs
+                    for face_idx in face_indices:
+                        if 0 <= face_idx < len(surface_ids):
+                            target = etree.SubElement(x3d_material, f"{{{NSMAP['app']}}}target")
+                            target.text = f"#{surface_ids[face_idx]}"
+                else:
+                    # Single-appearance: target the entire geometry
+                    target = etree.SubElement(x3d_material, f"{{{NSMAP['app']}}}target")
+                    target.text = f"#{geometry_id}"
+                
+                material_count += 1
+            
+            return True, material_count
+        except Exception as e:
+            return False, 0
+
     def generate(self):
+        """Generate CityGML 3.0 output from the IFC model and write to file."""
         root = etree.Element(f"{{{NSMAP['core']}}}CityModel", nsmap=NSMAP)
         root.set(f"{{{NSMAP['xsi']}}}schemaLocation", "http://www.opengis.net/citygml/profiles/base/3.0 http://schemas.opengis.net/citygml/profiles/base/3.0/CityGML.xsd")
         
@@ -437,6 +899,8 @@ class CityGMLGenerator:
             self.exported_elements = set()
             # Dictionary to store dummy BCEs per storey (for xlinks from Storey elements)
             dummy_bce_per_storey = {}
+            # Counter for appearances in this building
+            building_appearance_count = 0
             # Create cityObjectMember and Building for this IfcBuilding
             member = etree.SubElement(root, f"{{{NSMAP['core']}}}cityObjectMember")
             building = etree.SubElement(member, f"{{{NSMAP['bldg']}}}Building", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}"})
@@ -473,7 +937,7 @@ class CityGMLGenerator:
                 all_spaces = []
             rooms_list = [s for s in all_spaces if s in building_elements]
 
-            print(f"Converting building: {b_name or 'Unnamed'}")
+            print(f"\nConverting building: {b_name or 'Unnamed'}")
 
             # Collect all elements by type for this building
             # Use exact type matching (not inheritance) to avoid duplicates
@@ -510,27 +974,39 @@ class CityGMLGenerator:
                         name_elem.text = wall.Name
 
                     self.create_external_reference(cons_elem, getattr(wall, 'GlobalId', 'UNKNOWN'))
-                    self.add_properties(cons_elem, wall)
-
-                    # Get wall geometry
+                    
+                    # Generate geometry with surface IDs and per-face materials for multi-appearance support
                     is_solid = self.is_intended_solid(wall)
-                    polygons = self.get_geometry(wall)
-
+                    polygons, surface_ids, face_materials = self.get_geometry_with_surface_ids(wall)
+                    geometry_id = f"UUID_{uuid.uuid4()}" if polygons else None
+                    
+                    # Add appearance if element has color information (before generic attributes)
+                    # Pass surface_ids and face_materials for per-face targeting
+                    if geometry_id:
+                        success, mat_count = self.add_appearance(cons_elem, wall, gml_id, geometry_id, surface_ids, face_materials)
+                        if success:
+                            building_appearance_count += mat_count
+                    
+                    # Add generic attributes (after appearance)
+                    self.add_properties(cons_elem, wall)
+                    
+                    # Output geometry (after generic attributes)
                     if polygons:
                         if is_solid:
                             lod3 = etree.SubElement(cons_elem, f"{{{NSMAP['core']}}}lod3Solid")
-                            solid = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}Solid", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}", "srsName": self.srs_name, "srsDimension": "3"})
+                            solid = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}Solid", attrib={f"{{{NSMAP['gml']}}}id": geometry_id, "srsName": self.srs_name, "srsDimension": "3"})
                             exterior = etree.SubElement(solid, f"{{{NSMAP['gml']}}}exterior")
                             shell = etree.SubElement(exterior, f"{{{NSMAP['gml']}}}Shell")
                             parent_for_polys = shell
                         else:
                             lod3 = etree.SubElement(cons_elem, f"{{{NSMAP['core']}}}lod3MultiSurface")
-                            ms = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}MultiSurface", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}", "srsName": self.srs_name, "srsDimension": "3"})
+                            ms = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}MultiSurface", attrib={f"{{{NSMAP['gml']}}}id": geometry_id, "srsName": self.srs_name, "srsDimension": "3"})
                             parent_for_polys = ms
 
-                        for poly_coords in polygons:
+                        # Use the pre-generated surface_ids for each polygon
+                        for poly_coords, surface_id in zip(polygons, surface_ids):
                             sm = etree.SubElement(parent_for_polys, f"{{{NSMAP['gml']}}}surfaceMember")
-                            poly = etree.SubElement(sm, f"{{{NSMAP['gml']}}}Polygon", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}"})
+                            poly = etree.SubElement(sm, f"{{{NSMAP['gml']}}}Polygon", attrib={f"{{{NSMAP['gml']}}}id": surface_id})
                             ext = etree.SubElement(poly, f"{{{NSMAP['gml']}}}exterior")
                             lr = etree.SubElement(ext, f"{{{NSMAP['gml']}}}LinearRing")
                             pos = etree.SubElement(lr, f"{{{NSMAP['gml']}}}posList")
@@ -544,7 +1020,8 @@ class CityGMLGenerator:
                     doors_windows = self.get_doors_and_windows_in_element(wall)
                     for dw in doors_windows:
                         embedded_doors_windows.add(dw)
-                        self._add_door_or_window_as_filling(cons_elem, dw)
+                        mat_added = self._add_door_or_window_as_filling(cons_elem, dw, building_appearance_count)
+                        building_appearance_count += mat_added
                         # Output D for Door or W for Window
                         if dw.is_a("IfcDoor"):
                             print("D", end="", flush=True)
@@ -586,26 +1063,40 @@ class CityGMLGenerator:
                         name_elem.text = elem.Name
 
                     self.create_external_reference(cons_elem, getattr(elem, 'GlobalId', 'UNKNOWN'))
-                    self.add_properties(cons_elem, elem)
-
+                    
+                    # Generate geometry UUID early (needed for appearance)
                     is_solid = self.is_intended_solid(elem)
-                    polygons = self.get_geometry(elem)
-
+                    # Generate geometry with surface IDs for multi-appearance support
+                    polygons, surface_ids, face_materials = self.get_geometry_with_surface_ids(elem)
+                    geometry_id = f"UUID_{uuid.uuid4()}" if polygons else None
+                    
+                    # Add appearance if element has color information (before generic attributes)
+                    # Pass surface_ids to enable multi-appearance targeting
+                    if geometry_id:
+                        success, mat_count = self.add_appearance(cons_elem, elem, gml_id, geometry_id, surface_ids, face_materials)
+                        if success:
+                            building_appearance_count += mat_count
+                    
+                    # Add generic attributes (after appearance)
+                    self.add_properties(cons_elem, elem)
+                    
+                    # Output geometry (after generic attributes)
                     if polygons:
                         if is_solid:
                             lod3 = etree.SubElement(cons_elem, f"{{{NSMAP['core']}}}lod3Solid")
-                            solid = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}Solid", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}", "srsName": self.srs_name, "srsDimension": "3"})
+                            solid = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}Solid", attrib={f"{{{NSMAP['gml']}}}id": geometry_id, "srsName": self.srs_name, "srsDimension": "3"})
                             exterior = etree.SubElement(solid, f"{{{NSMAP['gml']}}}exterior")
                             shell = etree.SubElement(exterior, f"{{{NSMAP['gml']}}}Shell")
                             parent_for_polys = shell
                         else:
                             lod3 = etree.SubElement(cons_elem, f"{{{NSMAP['core']}}}lod3MultiSurface")
-                            ms = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}MultiSurface", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}", "srsName": self.srs_name, "srsDimension": "3"})
+                            ms = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}MultiSurface", attrib={f"{{{NSMAP['gml']}}}id": geometry_id, "srsName": self.srs_name, "srsDimension": "3"})
                             parent_for_polys = ms
 
-                        for poly_coords in polygons:
+                        # Use the pre-generated surface_ids for each polygon
+                        for poly_coords, surface_id in zip(polygons, surface_ids):
                             sm = etree.SubElement(parent_for_polys, f"{{{NSMAP['gml']}}}surfaceMember")
-                            poly = etree.SubElement(sm, f"{{{NSMAP['gml']}}}Polygon", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}"})
+                            poly = etree.SubElement(sm, f"{{{NSMAP['gml']}}}Polygon", attrib={f"{{{NSMAP['gml']}}}id": surface_id})
                             ext = etree.SubElement(poly, f"{{{NSMAP['gml']}}}exterior")
                             lr = etree.SubElement(ext, f"{{{NSMAP['gml']}}}LinearRing")
                             pos = etree.SubElement(lr, f"{{{NSMAP['gml']}}}posList")
@@ -622,7 +1113,8 @@ class CityGMLGenerator:
                     doors_windows = self.get_doors_and_windows_in_element(elem)
                     for dw in doors_windows:
                         embedded_doors_windows.add(dw)
-                        self._add_door_or_window_as_filling(cons_elem, dw)
+                        mat_added = self._add_door_or_window_as_filling(cons_elem, dw, building_appearance_count)
+                        building_appearance_count += mat_added
                         # Output D for Door or W for Window
                         if dw.is_a("IfcDoor"):
                             print("D", end="", flush=True)
@@ -703,7 +1195,8 @@ class CityGMLGenerator:
                                 
                                 # Add all doors/windows for this storey as fillings
                                 for dw in elements:
-                                    self._add_door_or_window_as_filling(dummy_elem, dw)
+                                    mat_added = self._add_door_or_window_as_filling(dummy_elem, dw, building_appearance_count)
+                                    building_appearance_count += mat_added
                                     # Output D for Door or W for Window
                                     if dw.is_a("IfcDoor"):
                                         print("D", end="", flush=True)
@@ -731,7 +1224,8 @@ class CityGMLGenerator:
                                 
                                 # Add all unmapped doors/windows as fillings
                                 for dw in unmapped_without_storey:
-                                    self._add_door_or_window_as_filling(dummy_elem, dw)
+                                    mat_added = self._add_door_or_window_as_filling(dummy_elem, dw, building_appearance_count)
+                                    building_appearance_count += mat_added
                                     # Output D for Door or W for Window
                                     if dw.is_a("IfcDoor"):
                                         print("D", end="", flush=True)
@@ -766,26 +1260,39 @@ class CityGMLGenerator:
                         name_elem.text = elem.Name
 
                     self.create_external_reference(inst_elem, getattr(elem, 'GlobalId', 'UNKNOWN'))
-                    self.add_properties(inst_elem, elem)
-
+                    
+                    # Generate geometry with surface IDs for multi-appearance support
                     is_solid = self.is_intended_solid(elem)
-                    polygons = self.get_geometry(elem)
-
+                    polygons, surface_ids, face_materials = self.get_geometry_with_surface_ids(elem)
+                    geometry_id = f"UUID_{uuid.uuid4()}" if polygons else None
+                    
+                    # Add appearance if element has color information (before generic attributes)
+                    # Pass surface_ids to enable multi-appearance targeting
+                    if geometry_id:
+                        success, mat_count = self.add_appearance(inst_elem, elem, gml_id, geometry_id, surface_ids, face_materials)
+                        if success:
+                            building_appearance_count += mat_count
+                    
+                    # Add generic attributes (after appearance)
+                    self.add_properties(inst_elem, elem)
+                    
+                    # Output geometry (after generic attributes)
                     if polygons:
                         if is_solid:
                             lod3 = etree.SubElement(inst_elem, f"{{{NSMAP['core']}}}lod3Solid")
-                            solid = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}Solid", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}", "srsName": self.srs_name, "srsDimension": "3"})
+                            solid = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}Solid", attrib={f"{{{NSMAP['gml']}}}id": geometry_id, "srsName": self.srs_name, "srsDimension": "3"})
                             exterior = etree.SubElement(solid, f"{{{NSMAP['gml']}}}exterior")
                             shell = etree.SubElement(exterior, f"{{{NSMAP['gml']}}}Shell")
                             parent_for_polys = shell
                         else:
                             lod3 = etree.SubElement(inst_elem, f"{{{NSMAP['core']}}}lod3MultiSurface")
-                            ms = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}MultiSurface", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}", "srsName": self.srs_name, "srsDimension": "3"})
+                            ms = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}MultiSurface", attrib={f"{{{NSMAP['gml']}}}id": geometry_id, "srsName": self.srs_name, "srsDimension": "3"})
                             parent_for_polys = ms
 
-                        for poly_coords in polygons:
+                        # Use the pre-generated surface_ids for each polygon
+                        for poly_coords, surface_id in zip(polygons, surface_ids):
                             sm = etree.SubElement(parent_for_polys, f"{{{NSMAP['gml']}}}surfaceMember")
-                            poly = etree.SubElement(sm, f"{{{NSMAP['gml']}}}Polygon", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}"})
+                            poly = etree.SubElement(sm, f"{{{NSMAP['gml']}}}Polygon", attrib={f"{{{NSMAP['gml']}}}id": surface_id})
                             ext = etree.SubElement(poly, f"{{{NSMAP['gml']}}}exterior")
                             lr = etree.SubElement(ext, f"{{{NSMAP['gml']}}}LinearRing")
                             pos = etree.SubElement(lr, f"{{{NSMAP['gml']}}}posList")
@@ -824,26 +1331,39 @@ class CityGMLGenerator:
                         name_el.text = r_name
 
                     self.create_external_reference(room_elem, getattr(elem, 'GlobalId', 'UNKNOWN'))
-                    self.add_properties(room_elem, elem)
-
+                    
+                    # Generate geometry with surface IDs for multi-appearance support
                     is_solid = self.is_intended_solid(elem)
-                    polygons = self.get_geometry(elem)
-
+                    polygons, surface_ids, face_materials = self.get_geometry_with_surface_ids(elem)
+                    geometry_id = f"UUID_{uuid.uuid4()}" if polygons else None
+                    
+                    # Add appearance if element has color information (before generic attributes)
+                    # Pass surface_ids to enable multi-appearance targeting
+                    if geometry_id:
+                        success, mat_count = self.add_appearance(room_elem, elem, gml_id, geometry_id, surface_ids, face_materials)
+                        if success:
+                            building_appearance_count += mat_count
+                    
+                    # Add generic attributes (after appearance)
+                    self.add_properties(room_elem, elem)
+                    
+                    # Output geometry (after generic attributes)
                     if polygons:
                         if is_solid:
                             lod3 = etree.SubElement(room_elem, f"{{{NSMAP['core']}}}lod3Solid")
-                            solid = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}Solid", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}", "srsName": self.srs_name, "srsDimension": "3"})
+                            solid = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}Solid", attrib={f"{{{NSMAP['gml']}}}id": geometry_id, "srsName": self.srs_name, "srsDimension": "3"})
                             exterior = etree.SubElement(solid, f"{{{NSMAP['gml']}}}exterior")
                             shell = etree.SubElement(exterior, f"{{{NSMAP['gml']}}}Shell")
                             parent_for_polys = shell
                         else:
                             lod3 = etree.SubElement(room_elem, f"{{{NSMAP['core']}}}lod3MultiSurface")
-                            ms = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}MultiSurface", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}", "srsName": self.srs_name, "srsDimension": "3"})
+                            ms = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}MultiSurface", attrib={f"{{{NSMAP['gml']}}}id": geometry_id, "srsName": self.srs_name, "srsDimension": "3"})
                             parent_for_polys = ms
 
-                        for poly_coords in polygons:
+                        # Use the pre-generated surface_ids for each polygon
+                        for poly_coords, surface_id in zip(polygons, surface_ids):
                             sm = etree.SubElement(parent_for_polys, f"{{{NSMAP['gml']}}}surfaceMember")
-                            poly = etree.SubElement(sm, f"{{{NSMAP['gml']}}}Polygon", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}"})
+                            poly = etree.SubElement(sm, f"{{{NSMAP['gml']}}}Polygon", attrib={f"{{{NSMAP['gml']}}}id": surface_id})
                             ext = etree.SubElement(poly, f"{{{NSMAP['gml']}}}exterior")
                             lr = etree.SubElement(ext, f"{{{NSMAP['gml']}}}LinearRing")
                             pos = etree.SubElement(lr, f"{{{NSMAP['gml']}}}posList")
@@ -881,26 +1401,39 @@ class CityGMLGenerator:
                         name_elem.text = elem.Name
 
                     self.create_external_reference(furn_elem, getattr(elem, 'GlobalId', 'UNKNOWN'))
-                    self.add_properties(furn_elem, elem)
-
+                    
+                    # Generate geometry with surface IDs for multi-appearance support
                     is_solid = self.is_intended_solid(elem)
-                    polygons = self.get_geometry(elem)
-
+                    polygons, surface_ids, face_materials = self.get_geometry_with_surface_ids(elem)
+                    geometry_id = f"UUID_{uuid.uuid4()}" if polygons else None
+                    
+                    # Add appearance if element has color information (before generic attributes)
+                    # Pass surface_ids to enable multi-appearance targeting
+                    if geometry_id:
+                        success, mat_count = self.add_appearance(furn_elem, elem, gml_id, geometry_id, surface_ids, face_materials)
+                        if success:
+                            building_appearance_count += mat_count
+                    
+                    # Add generic attributes (after appearance)
+                    self.add_properties(furn_elem, elem)
+                    
+                    # Output geometry (after generic attributes)
                     if polygons:
                         if is_solid:
                             lod3 = etree.SubElement(furn_elem, f"{{{NSMAP['core']}}}lod3Solid")
-                            solid = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}Solid", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}", "srsName": self.srs_name, "srsDimension": "3"})
+                            solid = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}Solid", attrib={f"{{{NSMAP['gml']}}}id": geometry_id, "srsName": self.srs_name, "srsDimension": "3"})
                             exterior = etree.SubElement(solid, f"{{{NSMAP['gml']}}}exterior")
                             shell = etree.SubElement(exterior, f"{{{NSMAP['gml']}}}Shell")
                             parent_for_polys = shell
                         else:
                             lod3 = etree.SubElement(furn_elem, f"{{{NSMAP['core']}}}lod3MultiSurface")
-                            ms = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}MultiSurface", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}", "srsName": self.srs_name, "srsDimension": "3"})
+                            ms = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}MultiSurface", attrib={f"{{{NSMAP['gml']}}}id": geometry_id, "srsName": self.srs_name, "srsDimension": "3"})
                             parent_for_polys = ms
 
-                        for poly_coords in polygons:
+                        # Use the pre-generated surface_ids for each polygon
+                        for poly_coords, surface_id in zip(polygons, surface_ids):
                             sm = etree.SubElement(parent_for_polys, f"{{{NSMAP['gml']}}}surfaceMember")
-                            poly = etree.SubElement(sm, f"{{{NSMAP['gml']}}}Polygon", attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}"})
+                            poly = etree.SubElement(sm, f"{{{NSMAP['gml']}}}Polygon", attrib={f"{{{NSMAP['gml']}}}id": surface_id})
                             ext = etree.SubElement(poly, f"{{{NSMAP['gml']}}}exterior")
                             lr = etree.SubElement(ext, f"{{{NSMAP['gml']}}}LinearRing")
                             pos = etree.SubElement(lr, f"{{{NSMAP['gml']}}}posList")
@@ -999,7 +1532,11 @@ class CityGMLGenerator:
                         
                         print(".", end="", flush=True)
                     print()
-
+                
+                # Print appearance count for this building
+                if building_appearance_count > 0:
+                    print(f"Total materials/appearances in this building: {building_appearance_count}")
+                
         tree = etree.ElementTree(root)
         tree.write(self.output_path, pretty_print=True, xml_declaration=True, encoding="UTF-8")
         print(f"Successfully wrote {self.output_path}")
@@ -1111,6 +1648,7 @@ if __name__ == "__main__":
     parser.add_argument("--no-generic-attribute-sets", action="store_true", help="Output IFC properties as direct generic attributes instead of wrapped in GenericAttributeSets")
     parser.add_argument("--pset-names-as-prefixes", action="store_true", help="Prefix property names with their property set name (e.g., [PSET_NAME]property_name)")
     parser.add_argument("--no-storeys", action="store_true", help="Do not export CityGML Storey objects")
+    parser.add_argument("--no-appearances", action="store_true", help="Do not export CityGML appearance elements (colors/materials)")
     parser.add_argument("--xoffset", type=float, default=0.0, help="Offset to shift the model in X direction (applied after georeferencing)")
     parser.add_argument("--yoffset", type=float, default=0.0, help="Offset to shift the model in Y direction (applied after georeferencing)")
     parser.add_argument("--zoffset", type=float, default=0.0, help="Offset to shift the model in Z direction (applied after georeferencing)")
@@ -1119,6 +1657,6 @@ if __name__ == "__main__":
     input_path = args.input_ifc
     output_path = args.output if args.output else os.path.splitext(input_path)[0] + ".gml"
 
-    converter = CityGMLGenerator(input_path, output_path, no_references=args.no_references, reorient_shells=args.reorient_shells, no_properties=args.no_properties, georef_oktoberfest=args.georef_oktoberfest, list_unmapped_doors_windows=args.list_unmapped_doors_and_windows, unrelated_doors_windows_in_dummy_bce=args.unrelated_doors_and_windows_in_dummy_bce, no_generic_attribute_sets=args.no_generic_attribute_sets, pset_names_as_prefixes=args.pset_names_as_prefixes, no_storeys=args.no_storeys, xoffset=args.xoffset, yoffset=args.yoffset, zoffset=args.zoffset)
+    converter = CityGMLGenerator(input_path, output_path, no_references=args.no_references, reorient_shells=args.reorient_shells, no_properties=args.no_properties, georef_oktoberfest=args.georef_oktoberfest, list_unmapped_doors_windows=args.list_unmapped_doors_and_windows, unrelated_doors_windows_in_dummy_bce=args.unrelated_doors_and_windows_in_dummy_bce, no_generic_attribute_sets=args.no_generic_attribute_sets, pset_names_as_prefixes=args.pset_names_as_prefixes, no_storeys=args.no_storeys, no_appearances=args.no_appearances, xoffset=args.xoffset, yoffset=args.yoffset, zoffset=args.zoffset)
     converter.generate()
     

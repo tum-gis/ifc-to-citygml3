@@ -55,6 +55,13 @@ The converter maps the following IFC classes to CityGML 3.0 Building classes:
 **Geometry Handling:**
 For each converted IFC element the geometry is checked whether it represents a volume (3D solid) or some surfaces. Depending on the type either `<core:lod3Solid>` or `<core:lod3MultiSurface>` geometry properties are generated. At the current stage, all surfaces (including the ones forming the closed shells of solids) are triangulated.
 
+**Appearance and Material Handling:**
+The converter extracts color and material information from IFC elements and creates corresponding CityGML 3.0 `<app:Appearance>` elements. This includes:
+- **Per-face materials**: Objects with different materials/colors on different parts (e.g., doors with wooden frames and glass panels) are properly represented with multiple `<app:X3DMaterial>` elements, each targeting the specific faces of the geometry.
+- **Transparency support**: Transparent materials (e.g., glass in windows) are represented with `<app:transparency>` values.
+
+The material information is extracted from various IFC sources including `IfcStyledItem`, `IfcSurfaceStyle`, `IfcMaterial`, and `IfcPresentationStyleAssignment` (common in IFC4). IfcOpenShell's geometry interface is used to obtain per-face material assignments for accurate multi-appearance mapping.
+
 **Property Handling:**
 The attributes of BIM models (IFC properties) are typically grouped into named property sets (PSET). All of these properties are mapped to CityGML 3.0 generic attribute sets with corresponding PSET names, which in turn contain the generic attributes. While this CityGML capability has been available since version 2.0, it has not been used much so far. It allows to logically group properties according to the same property sets in IFC. In case your CityGML downstream application cannot handle `<gen:GenericAttributeSet>` elements, there is a command line option that exports all properties as a flat structure. Optionally, the name of the PSET can be automatically added to the property name to still be able to distinguish properties with the same name but belonging to different property sets. IFC Properties of type Boolean are converted to CityGML integer attributes with 0=false and 1=true. 
 
@@ -180,6 +187,7 @@ python ifc2citygml.py input_model.ifc -o output.gml --georef-oktoberfest --no-st
 | `--no-references` | Do not export CityGML external references to IFC GUIDs |
 | `--no-properties` | Do not export IFC property sets / generic attributes |
 | `--no-storeys` | Do not export CityGML Storey objects |
+| `--no-appearances` | Do not export CityGML appearance elements (colors/materials) |
 | `--no-generic-attribute-sets` | Output IFC properties as direct generic attributes instead of wrapped in GenericAttributeSets |
 | `--pset-names-as-prefixes` | Prefix property names with their property set name (e.g., `[Pset_WallCommon]IsExternal`) |
 
@@ -222,6 +230,11 @@ python ifc2citygml.py building.ifc --unrelated-doors-and-windows-in-dummy-bce
 python ifc2citygml.py building.ifc --no-references --no-properties --no-storeys
 ```
 
+**Conversion without appearances (geometry only):**
+```bash
+python ifc2citygml.py building.ifc --no-appearances
+```
+
 **Apply coordinate offsets:**
 ```bash
 python ifc2citygml.py building.ifc --xoffset 100.0 --yoffset 200.0 --zoffset 50.0
@@ -242,6 +255,19 @@ The generated CityGML 3.0 file contains:
       <!-- BuildingConstructiveElements (Walls, Slabs, etc.) -->
       <bldg:buildingConstructiveElement>
         <bldg:BuildingConstructiveElement>
+          <!-- Appearance with materials/colors (multi-texturing supported) -->
+          <core:appearance>
+            <app:Appearance>
+              <app:theme>RGB</app:theme>
+              <app:surfaceData>
+                <app:X3DMaterial>
+                  <app:isFront>true</app:isFront>
+                  <app:diffuseColor>0.8 0.8 0.8</app:diffuseColor>
+                  <app:target>#UUID_...</app:target>
+                </app:X3DMaterial>
+              </app:surfaceData>
+            </app:Appearance>
+          </core:appearance>
           <!-- Geometry as lod3Solid or lod3MultiSurface -->
           <!-- con:filling for embedded Doors/Windows -->
           <bldg:class>IfcWall</bldg:class>
@@ -280,9 +306,11 @@ xmllint --noout --schema http://schemas.opengis.net/citygml/profiles/base/3.0/Ci
 
 Below are some screenshots of the transformed 'FZKHaus' data set visualised using the KIT ModelViewer. Left image: original IFC file, right image: generated CityGML3 file.
 
-| IFC dataset | Generated CityGML3 dataset |
+| IFC dataset (Color by type)| Generated CityGML3 dataset (Color by type)|
 |---------|---------|
-| ![FZKHaus represented in CityGML 3.0](images/image_ifc.png) | ![FZKHaus represented in CityGML 3.0](images/image_gml.png) |
+| ![FZKHaus represented in CityGML 3.0](images/image_ifc_color_by_entity.png) | ![FZKHaus represented in CityGML 3.0](images/image_gml_color_by_entity.png) |
+| IFC dataset (Color by object)| Generated CityGML3 dataset (Color by object)|
+| ![FZKHaus represented in CityGML 3.0](images/image_ifc_color_by_object.png) | ![FZKHaus represented in CityGML 3.0](images/image_gml_color_by_object.png) |
 
 ## Limitations
 
@@ -335,6 +363,6 @@ Chair of Geoinformatics, Technical University of Munich.
 
 This tool was developed at the [Chair of Geoinformatics](https://www.asg.ed.tum.de/gis/startseite/), Technical University of Munich, as part of our research on CityGML 3.0, BIM-GIS integration, and the Open Source 3D geodatabase [3DCityDB](https://github.com/3dcitydb).
 
-The current version of the tool has been developed with major support by AI-based coding tools including Google Gemini 2.5, Visual Studio Code, Github Co-Pilot with Claude Haiku 4.5, Open Code with Kimi 2.5 free. Only free versions of the tools have been used. It took 4 full days to develop this application. While the AI tools are very strong, I had to give a lot of guidance to the AI process and extra testing. The code has not been refactored yet to have a cleaner structure; it is so far the (working) result of AI-supported vibe coding.
+The current version of the tool has been developed with major support by AI-based coding tools including Google Gemini 2.5, Visual Studio Code, Github Co-Pilot with Claude Haiku 4.5, Open Code with Kimi 2.5 free and GLM-5 free. Only free versions of the tools have been used. It took 4 full days to develop this application. While the AI tools are very strong, I had to give a lot of guidance to the AI process and extra testing. The code has not been refactored yet to have a cleaner structure; it is so far the (working) result of AI-supported vibe coding.
 
 **Special thanks** to the developers of the [IfcOpenShell](http://ifcopenshell.org/) library for providing a powerful and robust open-source toolkit for working with IFC files. Without their excellent work, this converter would not be possible.
