@@ -1,0 +1,30 @@
+name: Invalidate build caches
+
+on:
+  schedule:
+    # Run on the first day of every month at 00:00 UTC
+    - cron: '0 0 1 * *'
+  # Allow manual trigger
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  invalidate-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete release build cache
+        run: |
+          gh cache delete --confirm "release" || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+
+      - name: Delete edge build cache
+        run: |
+          gh cache delete --confirm "*" || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
