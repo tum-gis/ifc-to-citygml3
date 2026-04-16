@@ -24,6 +24,7 @@ from lxml import etree
 NSMAP = {
     'core': "http://www.opengis.net/citygml/3.0",
     'bldg': "http://www.opengis.net/citygml/building/3.0",
+    'brid': "http://www.opengis.net/citygml/bridge/3.0",
     'con': "http://www.opengis.net/citygml/construction/3.0",
     'gen': "http://www.opengis.net/citygml/generics/3.0",
     'app': "http://www.opengis.net/citygml/appearance/3.0",
@@ -852,8 +853,14 @@ class CityGMLGenerator:
         except RuntimeError:
             ifc_buildings = []
 
-        if not ifc_buildings:
-            print("No IfcBuilding objects found in the model.")
+        # Get all IFC bridges (IFC4X3 and later)
+        try:
+            ifc_bridges = self.model.by_type("IfcBridge")
+        except RuntimeError:
+            ifc_bridges = []
+
+        if not ifc_buildings and not ifc_bridges:
+            print("No IfcBuilding or IfcBridge objects found in the model.")
             tree = etree.ElementTree(root)
             tree.write(self.output_path, pretty_print=True, xml_declaration=True, encoding="UTF-8")
             print(f"Successfully wrote {self.output_path}")
@@ -1536,7 +1543,316 @@ class CityGMLGenerator:
                 # Print appearance count for this building
                 if building_appearance_count > 0:
                     print(f"Total materials/appearances in this building: {building_appearance_count}")
-                
+
+        # -----------------------------------------------------------------------
+        # Export IfcBridge objects as CityGML brid:Bridge features
+        # -----------------------------------------------------------------------
+        # IFC structural types that map to BridgeConstructiveElement
+        bridge_constructive_types = [
+            "IfcBeam", "IfcSlab", "IfcColumn", "IfcMember", "IfcPlate",
+            "IfcStair", "IfcStairFlight", "IfcRamp", "IfcRampFlight",
+            "IfcFooting", "IfcPile", "IfcCurtainWall", "IfcBuildingElementProxy"
+        ]
+        bridge_installation_types = ["IfcCovering", "IfcRailing"]
+        bridge_furniture_types = ["IfcFurniture", "IfcSystemFurnitureElement", "IfcFurnishingElement"]
+
+        for ifc_bridge in ifc_bridges:
+            self.exported_elements = set()
+            bridge_appearance_count = 0
+            bridge_elements = set(ifcopenshell.util.element.get_decomposition(ifc_bridge))
+
+            br_name = getattr(ifc_bridge, 'Name', None)
+            br_desc = getattr(ifc_bridge, 'Description', None)
+            print(f"\nConverting bridge: {br_name or 'Unnamed'}")
+
+            member = etree.SubElement(root, f"{{{NSMAP['core']}}}cityObjectMember")
+            bridge_elem = etree.SubElement(member, f"{{{NSMAP['brid']}}}Bridge",
+                                           attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}"})
+
+            if br_desc:
+                desc_el = etree.SubElement(bridge_elem, f"{{{NSMAP['gml']}}}description")
+                desc_el.text = br_desc
+            if br_name:
+                name_el = etree.SubElement(bridge_elem, f"{{{NSMAP['gml']}}}name")
+                name_el.text = br_name
+
+            ext_guid = getattr(ifc_bridge, 'GlobalId', None)
+            if not ext_guid:
+                ext_guid = getattr(ifc_project, 'GlobalId', "UNKNOWN") if ifc_project else "UNKNOWN"
+            self.create_external_reference(bridge_elem, ext_guid)
+
+            try:
+                self.add_properties(bridge_elem, ifc_bridge)
+            except Exception:
+                pass
+
+            # Collect elements by type for this bridge (exact type matching)
+            bridge_ifc_elements = {}
+            for ifc_type in bridge_constructive_types + bridge_installation_types + bridge_furniture_types:
+                try:
+                    all_of_type = self.model.by_type(ifc_type)
+                except RuntimeError:
+                    all_of_type = []
+                bridge_ifc_elements[ifc_type] = [
+                    e for e in all_of_type if e in bridge_elements and e.is_a() == ifc_type
+                ]
+
+            # --- BridgeConstructiveElements ---
+            for ifc_type in bridge_constructive_types:
+                elements = bridge_ifc_elements.get(ifc_type, [])
+                if elements:
+                    print(f"{ifc_type}: ", end="", flush=True)
+
+                for elem in elements:
+                    cons_prop = etree.SubElement(bridge_elem, f"{{{NSMAP['brid']}}}bridgeConstructiveElement")
+                    gml_id = f"UUID_{uuid.uuid4()}"
+                    cons_elem = etree.SubElement(cons_prop, f"{{{NSMAP['brid']}}}BridgeConstructiveElement",
+                                                 attrib={f"{{{NSMAP['gml']}}}id": gml_id})
+                    self.element_gml_ids[elem] = gml_id
+
+                    if hasattr(elem, 'Description') and elem.Description:
+                        desc_el = etree.SubElement(cons_elem, f"{{{NSMAP['gml']}}}description")
+                        desc_el.text = elem.Description
+                    if hasattr(elem, 'Name') and elem.Name:
+                        name_el = etree.SubElement(cons_elem, f"{{{NSMAP['gml']}}}name")
+                        name_el.text = elem.Name
+
+                    self.create_external_reference(cons_elem, getattr(elem, 'GlobalId', 'UNKNOWN'))
+
+                    is_solid = self.is_intended_solid(elem)
+                    polygons, surface_ids, face_materials = self.get_geometry_with_surface_ids(elem)
+                    geometry_id = f"UUID_{uuid.uuid4()}" if polygons else None
+
+                    if geometry_id:
+                        success, mat_count = self.add_appearance(cons_elem, elem, gml_id, geometry_id, surface_ids, face_materials)
+                        if success:
+                            bridge_appearance_count += mat_count
+
+                    self.add_properties(cons_elem, elem)
+
+                    if polygons:
+                        if is_solid:
+                            lod3 = etree.SubElement(cons_elem, f"{{{NSMAP['core']}}}lod3Solid")
+                            solid = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}Solid",
+                                                     attrib={f"{{{NSMAP['gml']}}}id": geometry_id,
+                                                             "srsName": self.srs_name, "srsDimension": "3"})
+                            exterior = etree.SubElement(solid, f"{{{NSMAP['gml']}}}exterior")
+                            shell = etree.SubElement(exterior, f"{{{NSMAP['gml']}}}Shell")
+                            parent_for_polys = shell
+                        else:
+                            lod3 = etree.SubElement(cons_elem, f"{{{NSMAP['core']}}}lod3MultiSurface")
+                            ms = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}MultiSurface",
+                                                  attrib={f"{{{NSMAP['gml']}}}id": geometry_id,
+                                                          "srsName": self.srs_name, "srsDimension": "3"})
+                            parent_for_polys = ms
+
+                        for poly_coords, surface_id in zip(polygons, surface_ids):
+                            sm = etree.SubElement(parent_for_polys, f"{{{NSMAP['gml']}}}surfaceMember")
+                            poly = etree.SubElement(sm, f"{{{NSMAP['gml']}}}Polygon",
+                                                    attrib={f"{{{NSMAP['gml']}}}id": surface_id})
+                            ext = etree.SubElement(poly, f"{{{NSMAP['gml']}}}exterior")
+                            lr = etree.SubElement(ext, f"{{{NSMAP['gml']}}}LinearRing")
+                            pos = etree.SubElement(lr, f"{{{NSMAP['gml']}}}posList")
+                            pos.text = " ".join(f"{c:.3f}" for c in poly_coords)
+
+                        print(".", end="", flush=True)
+                        self.exported_elements.add(elem)
+                    else:
+                        bridge_elem.remove(cons_prop)
+
+                    class_elem = etree.SubElement(cons_elem, f"{{{NSMAP['brid']}}}class")
+                    class_elem.text = ifc_type
+
+                if elements:
+                    print()
+
+            # --- BridgeInstallations ---
+            for ifc_type in bridge_installation_types:
+                elements = bridge_ifc_elements.get(ifc_type, [])
+                if elements:
+                    print(f"{ifc_type}: ", end="", flush=True)
+
+                for elem in elements:
+                    inst_prop = etree.SubElement(bridge_elem, f"{{{NSMAP['brid']}}}bridgeInstallation")
+                    gml_id = f"UUID_{uuid.uuid4()}"
+                    inst_elem = etree.SubElement(inst_prop, f"{{{NSMAP['brid']}}}BridgeInstallation",
+                                                 attrib={f"{{{NSMAP['gml']}}}id": gml_id})
+                    self.element_gml_ids[elem] = gml_id
+
+                    if hasattr(elem, 'Description') and elem.Description:
+                        desc_el = etree.SubElement(inst_elem, f"{{{NSMAP['gml']}}}description")
+                        desc_el.text = elem.Description
+                    if hasattr(elem, 'Name') and elem.Name:
+                        name_el = etree.SubElement(inst_elem, f"{{{NSMAP['gml']}}}name")
+                        name_el.text = elem.Name
+
+                    self.create_external_reference(inst_elem, getattr(elem, 'GlobalId', 'UNKNOWN'))
+
+                    is_solid = self.is_intended_solid(elem)
+                    polygons, surface_ids, face_materials = self.get_geometry_with_surface_ids(elem)
+                    geometry_id = f"UUID_{uuid.uuid4()}" if polygons else None
+
+                    if geometry_id:
+                        success, mat_count = self.add_appearance(inst_elem, elem, gml_id, geometry_id, surface_ids, face_materials)
+                        if success:
+                            bridge_appearance_count += mat_count
+
+                    self.add_properties(inst_elem, elem)
+
+                    if polygons:
+                        if is_solid:
+                            lod3 = etree.SubElement(inst_elem, f"{{{NSMAP['core']}}}lod3Solid")
+                            solid = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}Solid",
+                                                     attrib={f"{{{NSMAP['gml']}}}id": geometry_id,
+                                                             "srsName": self.srs_name, "srsDimension": "3"})
+                            exterior = etree.SubElement(solid, f"{{{NSMAP['gml']}}}exterior")
+                            shell = etree.SubElement(exterior, f"{{{NSMAP['gml']}}}Shell")
+                            parent_for_polys = shell
+                        else:
+                            lod3 = etree.SubElement(inst_elem, f"{{{NSMAP['core']}}}lod3MultiSurface")
+                            ms = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}MultiSurface",
+                                                  attrib={f"{{{NSMAP['gml']}}}id": geometry_id,
+                                                          "srsName": self.srs_name, "srsDimension": "3"})
+                            parent_for_polys = ms
+
+                        for poly_coords, surface_id in zip(polygons, surface_ids):
+                            sm = etree.SubElement(parent_for_polys, f"{{{NSMAP['gml']}}}surfaceMember")
+                            poly = etree.SubElement(sm, f"{{{NSMAP['gml']}}}Polygon",
+                                                    attrib={f"{{{NSMAP['gml']}}}id": surface_id})
+                            ext = etree.SubElement(poly, f"{{{NSMAP['gml']}}}exterior")
+                            lr = etree.SubElement(ext, f"{{{NSMAP['gml']}}}LinearRing")
+                            pos = etree.SubElement(lr, f"{{{NSMAP['gml']}}}posList")
+                            pos.text = " ".join(f"{c:.3f}" for c in poly_coords)
+
+                        print(".", end="", flush=True)
+                        self.exported_elements.add(elem)
+                    else:
+                        bridge_elem.remove(inst_prop)
+
+                    class_elem = etree.SubElement(inst_elem, f"{{{NSMAP['brid']}}}class")
+                    class_elem.text = ifc_type
+
+                if elements:
+                    print()
+
+            # --- BridgeFurniture ---
+            for ifc_type in bridge_furniture_types:
+                elements = bridge_ifc_elements.get(ifc_type, [])
+                if elements:
+                    print(f"{ifc_type}: ", end="", flush=True)
+
+                for elem in elements:
+                    furn_prop = etree.SubElement(bridge_elem, f"{{{NSMAP['brid']}}}bridgeFurniture")
+                    gml_id = f"UUID_{uuid.uuid4()}"
+                    furn_elem = etree.SubElement(furn_prop, f"{{{NSMAP['brid']}}}BridgeFurniture",
+                                                 attrib={f"{{{NSMAP['gml']}}}id": gml_id})
+                    self.element_gml_ids[elem] = gml_id
+
+                    if hasattr(elem, 'Description') and elem.Description:
+                        desc_el = etree.SubElement(furn_elem, f"{{{NSMAP['gml']}}}description")
+                        desc_el.text = elem.Description
+                    if hasattr(elem, 'Name') and elem.Name:
+                        name_el = etree.SubElement(furn_elem, f"{{{NSMAP['gml']}}}name")
+                        name_el.text = elem.Name
+
+                    self.create_external_reference(furn_elem, getattr(elem, 'GlobalId', 'UNKNOWN'))
+
+                    is_solid = self.is_intended_solid(elem)
+                    polygons, surface_ids, face_materials = self.get_geometry_with_surface_ids(elem)
+                    geometry_id = f"UUID_{uuid.uuid4()}" if polygons else None
+
+                    if geometry_id:
+                        success, mat_count = self.add_appearance(furn_elem, elem, gml_id, geometry_id, surface_ids, face_materials)
+                        if success:
+                            bridge_appearance_count += mat_count
+
+                    self.add_properties(furn_elem, elem)
+
+                    if polygons:
+                        if is_solid:
+                            lod3 = etree.SubElement(furn_elem, f"{{{NSMAP['core']}}}lod3Solid")
+                            solid = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}Solid",
+                                                     attrib={f"{{{NSMAP['gml']}}}id": geometry_id,
+                                                             "srsName": self.srs_name, "srsDimension": "3"})
+                            exterior = etree.SubElement(solid, f"{{{NSMAP['gml']}}}exterior")
+                            shell = etree.SubElement(exterior, f"{{{NSMAP['gml']}}}Shell")
+                            parent_for_polys = shell
+                        else:
+                            lod3 = etree.SubElement(furn_elem, f"{{{NSMAP['core']}}}lod3MultiSurface")
+                            ms = etree.SubElement(lod3, f"{{{NSMAP['gml']}}}MultiSurface",
+                                                  attrib={f"{{{NSMAP['gml']}}}id": geometry_id,
+                                                          "srsName": self.srs_name, "srsDimension": "3"})
+                            parent_for_polys = ms
+
+                        for poly_coords, surface_id in zip(polygons, surface_ids):
+                            sm = etree.SubElement(parent_for_polys, f"{{{NSMAP['gml']}}}surfaceMember")
+                            poly = etree.SubElement(sm, f"{{{NSMAP['gml']}}}Polygon",
+                                                    attrib={f"{{{NSMAP['gml']}}}id": surface_id})
+                            ext = etree.SubElement(poly, f"{{{NSMAP['gml']}}}exterior")
+                            lr = etree.SubElement(ext, f"{{{NSMAP['gml']}}}LinearRing")
+                            pos = etree.SubElement(lr, f"{{{NSMAP['gml']}}}posList")
+                            pos.text = " ".join(f"{c:.3f}" for c in poly_coords)
+
+                        print(".", end="", flush=True)
+                        self.exported_elements.add(elem)
+                    else:
+                        bridge_elem.remove(furn_prop)
+
+                    class_elem = etree.SubElement(furn_elem, f"{{{NSMAP['brid']}}}class")
+                    class_elem.text = ifc_type
+
+                if elements:
+                    print()
+
+            # --- Export IfcBridgePart subdivisions (unless --no-storeys is set) ---
+            if not getattr(self, 'no_storeys', False):
+                try:
+                    all_bridge_parts = self.model.by_type("IfcBridgePart")
+                except RuntimeError:
+                    all_bridge_parts = []
+
+                bridge_parts_list = [p for p in all_bridge_parts if p in bridge_elements]
+
+                if bridge_parts_list:
+                    print("IfcBridgePart: ", end="", flush=True)
+                    for part in bridge_parts_list:
+                        part_prop = etree.SubElement(bridge_elem, f"{{{NSMAP['brid']}}}bridgeSubdivision")
+                        part_elem = etree.SubElement(part_prop, f"{{{NSMAP['brid']}}}BridgePart",
+                                                     attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}"})
+
+                        p_desc = getattr(part, 'Description', None)
+                        p_name = getattr(part, 'Name', None)
+                        if p_desc:
+                            desc_el = etree.SubElement(part_elem, f"{{{NSMAP['gml']}}}description")
+                            desc_el.text = p_desc
+                        if p_name:
+                            name_el = etree.SubElement(part_elem, f"{{{NSMAP['gml']}}}name")
+                            name_el.text = p_name
+
+                        self.create_external_reference(part_elem, getattr(part, 'GlobalId', 'UNKNOWN'))
+                        self.add_properties(part_elem, part)
+
+                        # XLinks to constructive elements contained in this bridge part
+                        part_elements = self._get_bridge_part_elements(part)
+                        all_bridge_element_types = bridge_constructive_types + bridge_installation_types + bridge_furniture_types
+                        for elem_type in all_bridge_element_types:
+                            try:
+                                type_elements = self.model.by_type(elem_type)
+                            except RuntimeError:
+                                type_elements = []
+                            type_elements = [e for e in type_elements if e in bridge_elements and e in part_elements]
+                            for elem in type_elements:
+                                if elem in self.element_gml_ids and elem in self.exported_elements:
+                                    elem_gml_id = self.element_gml_ids[elem]
+                                    contains = etree.SubElement(part_elem, f"{{{NSMAP['brid']}}}bridgeConstructiveElement")
+                                    contains.set(f"{{{NSMAP['xlink']}}}href", f"#{elem_gml_id}")
+
+                        print(".", end="", flush=True)
+                    print()
+
+            if bridge_appearance_count > 0:
+                print(f"Total materials/appearances in this bridge: {bridge_appearance_count}")
+
         tree = etree.ElementTree(root)
         tree.write(self.output_path, pretty_print=True, xml_declaration=True, encoding="UTF-8")
         print(f"Successfully wrote {self.output_path}")
@@ -1546,6 +1862,24 @@ class CityGMLGenerator:
         # Print offset information if any offset was applied
         if self.xoffset != 0.0 or self.yoffset != 0.0 or self.zoffset != 0.0:
             print(f"Offset applied: X={self.xoffset:.3f}, Y={self.yoffset:.3f}, Z={self.zoffset:.3f}")
+
+    def _get_bridge_part_elements(self, bridge_part):
+        """
+        Gets all elements that belong to a bridge part, including those connected via
+        ContainedInStructure (IfcRelContainedInSpatialStructure) relation.
+        """
+        part_elements = set()
+
+        # Get elements via decomposition
+        part_elements.update(ifcopenshell.util.element.get_decomposition(bridge_part))
+
+        # Get elements via ContainsElements
+        if hasattr(bridge_part, 'ContainsElements') and bridge_part.ContainsElements:
+            for rel in bridge_part.ContainsElements:
+                if rel.is_a('IfcRelContainedInSpatialStructure'):
+                    part_elements.update(rel.RelatedElements)
+
+        return part_elements
 
     def _list_unmapped_doors_windows(self, unmapped_doors_windows):
         """
