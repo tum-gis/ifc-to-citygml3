@@ -1816,7 +1816,7 @@ class CityGMLGenerator:
                 if bridge_parts_list:
                     print("IfcBridgePart: ", end="", flush=True)
                     for part in bridge_parts_list:
-                        part_prop = etree.SubElement(bridge_elem, f"{{{NSMAP['brid']}}}bridgeSubdivision")
+                        part_prop = etree.SubElement(bridge_elem, f"{{{NSMAP['brid']}}}bridgePart")
                         part_elem = etree.SubElement(part_prop, f"{{{NSMAP['brid']}}}BridgePart",
                                                      attrib={f"{{{NSMAP['gml']}}}id": f"UUID_{uuid.uuid4()}"})
 

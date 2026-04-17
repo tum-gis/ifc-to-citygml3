@@ -57,7 +57,7 @@ The following IFC classes are mapped to CityGML 3.0 Bridge module classes:
 | IFC Class | CityGML 3.0 Class |
 |-----------|-------------------|
 | `IfcBridge` | `brid:Bridge` |
-| `IfcBridgePart` | `brid:BridgePart` (via `brid:bridgeSubdivision`) |
+| `IfcBridgePart` | `brid:BridgePart` (via `brid:bridgePart`) |
 | `IfcBeam` | `brid:BridgeConstructiveElement` |
 | `IfcSlab` | `brid:BridgeConstructiveElement` |
 | `IfcColumn` | `brid:BridgeConstructiveElement` |
