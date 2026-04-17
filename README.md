@@ -48,6 +48,37 @@ The converter maps the following IFC classes to CityGML 3.0 Building classes:
 **Storey:**
 - `IfcBuildingStorey` → `Storey` (with xlinks to contained elements)
 
+## Bridge Support (IFC4X3)
+
+The converter automatically detects `IfcBridge` objects and exports them using the CityGML 3.0 **Bridge** module (`brid` namespace: `http://www.opengis.net/citygml/bridge/3.0`).
+
+The following IFC classes are mapped to CityGML 3.0 Bridge module classes:
+
+| IFC Class | CityGML 3.0 Class |
+|-----------|-------------------|
+| `IfcBridge` | `brid:Bridge` |
+| `IfcBridgePart` | `brid:BridgePart` (via `brid:bridgePart`) |
+| `IfcBeam` | `brid:BridgeConstructiveElement` |
+| `IfcSlab` | `brid:BridgeConstructiveElement` |
+| `IfcColumn` | `brid:BridgeConstructiveElement` |
+| `IfcMember` | `brid:BridgeConstructiveElement` |
+| `IfcPlate` | `brid:BridgeConstructiveElement` |
+| `IfcStair`, `IfcStairFlight` | `brid:BridgeConstructiveElement` |
+| `IfcRamp`, `IfcRampFlight` | `brid:BridgeConstructiveElement` |
+| `IfcFooting` | `brid:BridgeConstructiveElement` |
+| `IfcPile` | `brid:BridgeConstructiveElement` |
+| `IfcCurtainWall` | `brid:BridgeConstructiveElement` |
+| `IfcBuildingElementProxy` | `brid:BridgeConstructiveElement` |
+| `IfcRailing` | `brid:BridgeInstallation` |
+| `IfcCovering` | `brid:BridgeInstallation` |
+| `IfcFurniture` | `brid:BridgeFurniture` |
+| `IfcSystemFurnitureElement` | `brid:BridgeFurniture` |
+| `IfcFurnishingElement` | `brid:BridgeFurniture` |
+
+`IfcBridgePart` objects (e.g., deck, girder, structure, foundation) are exported as `brid:BridgePart` subdivisions with xlinks to contained structural elements, unless the `--no-storeys` flag is set.
+
+The converter handles models containing only bridges, only buildings, or a mix of both. Both types can coexist in a single CityGML output file as separate `core:cityObjectMember` entries.
+
 **Special Handling of Doors and Windows:**
 - `IfcDoor` and `IfcWindow` are embedded as `<con:filling>` elements within their parent walls as `<con:Door>` and `<con:Window>` features.
 - **Unmapped Doors and Windows**: Some IFC files contain doors and windows that are not directly associated with a wall or other constructive element. For such cases, the tool provides a command-line option (`--unrelated-doors-and-windows-in-dummy-bce`) to create empty dummy `<bldg:BuildingConstructiveElements>` that group these unintegrated doors and windows by storey and include them in the CityGML output.
